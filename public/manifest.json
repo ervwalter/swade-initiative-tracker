@@ -1,5 +1,5 @@
 {
-  "name": "Savage Worlds Initiative Tracker",
+  "name": "Savage Worlds Initiative",
   "version": "1.0.0",
   "manifest_version": 1,
   "author": "ervwalter",
@@ -7,7 +7,7 @@
   "icon": "/logo.png",
   "description": "A Savage Worlds initiative tracker with a shared view for you and your players",
   "action": {
-    "title": "Savage Worlds Initiative Tracker",
+    "title": "Savage Worlds Initiative",
     "icon": "/icon.svg",
     "popover": "/",
     "height": 129,
