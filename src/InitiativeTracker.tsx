@@ -11,8 +11,7 @@ import OBR, { isImage, Item, Player } from "@owlbear-rodeo/sdk";
 
 import { InitiativeItem } from "./InitiativeItem";
 
-import addIcon from "./assets/add.svg";
-import removeIcon from "./assets/remove.svg";
+
 
 import { InitiativeListItem } from "./InitiativeListItem";
 import { getPluginId } from "./getPluginId";
@@ -70,7 +69,7 @@ export function InitiativeTracker() {
     OBR.contextMenu.create({
       icons: [
         {
-          icon: addIcon,
+          icon: "/icon.svg",
           label: "Add to Initiative",
           filter: {
             every: [
@@ -83,7 +82,7 @@ export function InitiativeTracker() {
           },
         },
         {
-          icon: removeIcon,
+          icon: "/icon.svg",
           label: "Remove from Initiative",
           filter: {
             every: [

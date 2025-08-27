@@ -1,9 +1,14 @@
 {
-  "name": "initiative-tracker",
+  "name": "swade-initiative-tracker",
   "private": true,
   "version": "1.0.0",
   "type": "module",
   "license": "GPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ervwalter/swade-initiative-tracker.git"
+  },
+  "homepage": "https://github.com/ervwalter/swade-initiative-tracker",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -14,15 +19,15 @@
     "@emotion/styled": "^11.10.4",
     "@mui/icons-material": "^5.10.6",
     "@mui/material": "^5.10.7",
-    "@owlbear-rodeo/sdk": "^2.1.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "@owlbear-rodeo/sdk": "^3.1.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
   },
   "devDependencies": {
-    "@types/react": "^18.0.17",
-    "@types/react-dom": "^18.0.6",
-    "@vitejs/plugin-react": "^2.1.0",
-    "typescript": "^4.6.4",
-    "vite": "^3.1.0"
+    "@types/react": "^19.1.11",
+    "@types/react-dom": "^19.1.8",
+    "@vitejs/plugin-react": "^5.0.1",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.3"
   }
 }

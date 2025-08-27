@@ -1,12 +1,12 @@
-# Owlbear Rodeo Initiative Tracker
+# SWADE Initiative Tracker
 
-A basic initiative tracker with a shared view for you and your players
+A SWADE initiative tracker with a shared view for you and your players
 
 ![Example](/docs/header.jpg)
 
 ## Installing
 
-The extension can be installed from the [store page](https://extensions.owlbear.rodeo/initiative-tracker).
+This is a fork of the original Owlbear Rodeo initiative tracker, customized for SWADE gameplay.
 
 ## How it Works
 
@@ -34,8 +34,14 @@ To make a production build run:
 
 GNU GPLv3
 
+## Attribution
+
+Icon: ace of spades by b farias from <a href="https://thenounproject.com/browse/icons/term/ace-of-spades/" target="_blank" title="ace of spades Icons">Noun Project</a> (CC BY 3.0)
+
 ## Contributing
 
-This project is provided as an example of how to use the Owlbear Rodeo SDK. As such it is unlikely that we will accept pull requests for new features.
+This project is a fork of the original Owlbear Rodeo initiative tracker, modified for SWADE-specific functionality.
 
-Copyright (C) 2023 Owlbear Rodeo
+Original project: https://github.com/owlbear-rodeo/initiative-tracker
+Copyright (C) 2023 Owlbear Rodeo (original)
+Copyright (C) 2024 ervwalter (modifications)

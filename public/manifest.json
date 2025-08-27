@@ -1,13 +1,13 @@
 {
-  "name": "Initiative Tracker",
+  "name": "Savage Worlds Initiative Tracker",
   "version": "1.0.0",
   "manifest_version": 1,
-  "author": "Owlbear Rodeo",
-  "homepage_url": "https://extensions.owlbear.rodeo/initiative-tracker",
+  "author": "ervwalter",
+  "homepage_url": "https://github.com/ervwalter/swade-initiative-tracker",
   "icon": "/logo.png",
-  "description": "A basic initiative tracker with a shared view for you and your players",
+  "description": "A Savage Worlds initiative tracker with a shared view for you and your players",
   "action": {
-    "title": "Initiative Tracker",
+    "title": "Savage Worlds Initiative Tracker",
     "icon": "/icon.svg",
     "popover": "/",
     "height": 129,
