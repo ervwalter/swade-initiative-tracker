@@ -6,37 +6,57 @@ Based on the implementation plan from `swade-design.md` with 20 incremental, tes
 
 ---
 
-## Phase 1 - State & Metadata Sync
+## Phase 1 - State & Metadata Sync ✅ COMPLETE
 **Goal**: Set up the foundation for scene metadata synchronization
 
-- [ ] Define `EncounterState` interface in `src/state/types.ts`
-- [ ] Define `Card`, `ParticipantRow`, `Deck` interfaces 
-- [ ] Define `LocalComponentState` for local undo stack
-- [ ] Create `getCardId()` helper function for deterministic card IDs
-- [ ] Implement scene metadata read/write helpers in `src/state/sceneState.ts`
-- [ ] Set up `onMetadataChange` subscription pattern
-- [ ] Bootstrap empty state initialization (round=0, phase='setup')
-- [ ] **Test**: Verify state persists across browser refresh
+- [x] Define `EncounterState` interface in `src/state/types.ts`
+- [x] Define `Card`, `ParticipantRow`, `Deck` interfaces 
+- [x] Define `LocalComponentState` for local undo stack
+- [x] Create `getCardId()` helper function for deterministic card IDs
+- [x] Implement scene metadata read/write helpers in `src/state/sceneState.ts`
+- [x] Set up `onMetadataChange` subscription pattern
+- [x] Bootstrap empty state initialization (round=0, phase='setup')
+- [x] **Test**: Verify state persists across browser refresh
 
 **Design Reference**: Section 2 (Architecture), Section 3 (Data Model)
 **Key Files**: `src/state/types.ts`, `src/state/sceneState.ts`
 
 ---
 
-## Phase 2 - Deck System
+## Phase 2 - Deck System ✅ COMPLETE
 **Goal**: Implement card deck operations with deterministic IDs
 
-- [ ] Create `src/deck/deck.ts` with deck building functions
-- [ ] Implement standard 54-card deck generation (52 cards + 2 Jokers)
-- [ ] Use deterministic card IDs: "AS", "10H", "JK-R", "JK-B", etc.
-- [ ] Create static `cards` lookup table for rendering
-- [ ] Implement Fisher-Yates shuffle algorithm
-- [ ] Add draw card operation (pop from remaining array)
-- [ ] Add discard operation (push to discard array)
-- [ ] **Test**: Console commands to draw/shuffle/verify deck state
+- [x] Create `src/deck/deck.ts` with deck building functions
+- [x] Implement standard 54-card deck generation (52 cards + 2 Jokers)
+- [x] Use deterministic card IDs: "AS", "10H", "JK-R", "JK-B", etc.
+- [x] Create static `cards` lookup table for rendering
+- [x] Implement Fisher-Yates shuffle algorithm
+- [x] Add draw card operation (pop from remaining array)
+- [x] Add discard operation (push to discard array)
+- [x] **Test**: Console commands to draw/shuffle/verify deck state
 
 **Design Reference**: Section 4.1 (Deck init), Section 4.2 (Drawing a card)
 **Key Files**: `src/deck/deck.ts`, `src/deck/cardIds.ts`
+
+---
+
+## Phase 2.5 - State Management Refactor  
+**Goal**: Migrate from manual state management to Zustand + Immer
+
+- [ ] Install Zustand and Immer dependencies (`yarn add zustand immer`)
+- [ ] Create `src/store/swadeStore.ts` with initial store structure
+- [ ] Implement OBR metadata storage adapter for persistence
+- [ ] Create store actions for deck operations (drawCard, shuffleDeck, etc.)
+- [ ] Create store actions for game operations (createParticipant, dealTo, endRound)
+- [ ] Replace console utilities to use store actions directly
+- [ ] Update InitiativeTracker to use store instead of local state management
+- [ ] Remove legacy state management code (`deepCopyEncounterState`, manual state copying)
+- [ ] **Test**: Multi-client sync works with new store
+- [ ] **Test**: Console utilities work with store-based actions
+- [ ] **Test**: State persists across refresh using Zustand persistence
+
+**Design Reference**: `swade-design-state-refactor.md`
+**Key Files**: `src/store/swadeStore.ts`, `src/store/obrStorage.ts`
 
 ---
 

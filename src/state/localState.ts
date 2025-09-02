@@ -3,6 +3,7 @@
 
 import { useState, useCallback } from 'react';
 import { EncounterState } from './types';
+import { deepCopyEncounterState } from './stateUtils';
 
 const MAX_UNDO_STACK_SIZE = 20;
 
@@ -31,7 +32,7 @@ export function useUndoState(): UndoState {
 
   const pushUndoSnapshot = useCallback((state: EncounterState) => {
     // Deep copy the state to avoid reference issues
-    const stateCopy = JSON.parse(JSON.stringify(state)) as EncounterState;
+    const stateCopy = deepCopyEncounterState(state);
     
     setUndoStack(prev => {
       const newStack = [...prev, stateCopy];

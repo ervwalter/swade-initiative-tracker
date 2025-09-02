@@ -13,16 +13,11 @@ export interface Card {
   label: string;         // e.g., 'A♠', '10♦', 'Red Joker', 'Black Joker'
 }
 
-// Helper function for card ID generation
-export function getCardId(rank: Rank | 'JOKER', suit?: Suit, jokerColor?: 'RED' | 'BLACK'): CardId {
-  if (rank === 'JOKER') {
-    return jokerColor === 'RED' ? 'JK-R' : 'JK-B';
-  }
-  return `${rank}${suit}`;
-}
+// Note: getCardId function moved to src/deck/cardIds.ts
 
 export interface Deck {
   remaining: CardId[];    // top of deck is end of array (pop)
+  inPlay: CardId[];       // cards currently assigned to participants
   discard: CardId[];
   reshuffleAfterRound: boolean; // true if any Joker appeared this round
 }
@@ -55,7 +50,7 @@ export interface ActNowInsertion {
 }
 
 export interface EncounterState {
-  version: 1;
+  version: 2;
   round: number;               // 0 before first deal; increments each Deal Round
   phase: Phase;                // 'setup' before first round; 'between_rounds' after End Round; 'in_round' during a round
   deck: Deck;
