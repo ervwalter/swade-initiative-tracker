@@ -25,9 +25,10 @@ Key tenets:
 - UI: React + MUI (existing stack). Components modularized by feature.
 - State sync: OBR Scene Metadata under plugin key `rodeo.owlbear.initiative-tracker/state`.
 - Token link: OBR Items keep a lightweight tag in Item metadata `rodeo.owlbear.initiative-tracker/metadata` to mark that the token participates and to store the row id link.
-- Authority: Any GM may perform actions. Players are read-only in the initial design. Concurrency uses a simple last-write-wins model; UIs mirror scene metadata exactly (see Sync).
+- Authority: Single GM assumption (multiple GMs use simple last-write-wins if needed). Players are read-only.
 - Persistence: Encounter state persists in scene metadata so all clients see the same deck/initiative status.
-- Privacy: UI-level privacy (values hidden for players). Note: Motivated players could inspect state via devtools; acceptable for “bookkeeping-only” scope.
+- Undo: Local-only (not synced) - each GM maintains their own undo history in component state.
+- Privacy: UI-level privacy (values hidden for players) for friendly games.
 
 OBR APIs verified (via installed SDK types v3.1.0):
 - `OBR.scene.getMetadata(): Promise<Metadata>` and `OBR.scene.setMetadata(update: Metadata)`; `OBR.scene.onMetadataChange((metadata) => ...)` — scene-scoped shared metadata for all clients in the scene. See `node_modules/@owlbear-rodeo/sdk/lib/api/scene/SceneApi.d.ts:18`.
@@ -48,14 +49,22 @@ Canonical types (TypeScript-style):
 type Suit = 'S' | 'H' | 'D' | 'C';
 type Rank = 'A' | 'K' | 'Q' | 'J' | '10' | '9' | '8' | '7' | '6' | '5' | '4' | '3' | '2';
 
-type CardId = string; // stable id
+type CardId = string; // deterministic id: "AS", "10H", "JK-R", "JK-B"
 
 interface Card {
-  id: CardId;
+  id: CardId;            // deterministic: rank+suit or "JK-R"/"JK-B"
   rank: Rank | 'JOKER';
   suit?: Suit;           // undefined for Jokers
   jokerColor?: 'RED' | 'BLACK'; // defined only when rank==='JOKER'
   label: string;         // e.g., 'A♠', '10♦', 'Red Joker', 'Black Joker'
+}
+
+// Helper function for card ID generation
+function getCardId(rank: Rank | 'JOKER', suit?: Suit, jokerColor?: 'RED' | 'BLACK'): CardId {
+  if (rank === 'JOKER') {
+    return jokerColor === 'RED' ? 'JK-R' : 'JK-B';
+  }
+  return `${rank}${suit}`;
 }
 
 interface Deck {
@@ -91,16 +100,17 @@ interface EncounterState {
   round: number;               // 0 before first deal; increments each Deal Round
   phase: Phase;                // 'setup' before first round; 'between_rounds' after End Round; 'in_round' during a round
   deck: Deck;
-  cards: Record<CardId, Card>; // static deck catalog
+  cards: Record<CardId, Card>; // static deck catalog (built once, deterministic IDs)
   rows: Record<string, ParticipantRow>;
-  turn: { activeRowId: string | null; actNow?: { rowId: string; position: 'before' | 'after' }[] }; // active row id; optional inline Act Now insertions
+  turn: { activeRowId: string | null; actNow?: { rowId: string; position: 'before' | 'after' }[] };
   settings: Settings;
-  undoStack: { id: string; by: string; at: number; label: string; snapshot: EncounterSnapshot }[]; // persistent, size-limited by count (default 20)
-  // Redo removed for MVP (Undo only)
-  updatedAt: number;
-  updatedBy?: string;          // last writer player id
+  // REMOVED: undoStack (now local-only), updatedAt, updatedBy (single GM assumption)
 }
-type EncounterSnapshot = Omit<EncounterState, 'undoStack' | 'updatedAt' | 'updatedBy'>;
+
+// Local component state (NOT synced in metadata)
+interface LocalComponentState {
+  undoStack: EncounterState[]; // Local undo history (max 10-20)
+}
 ```
 
 Notes:
@@ -108,7 +118,9 @@ Notes:
 - “Rows” are the source of truth for per-participant state. Display order is computed on render from current cards (Jokers/Rank/Suit); no persisted order array is stored.
 - Cards are drawn by moving ids from `deck.remaining` into a row’s `candidateIds`. When a keeper is selected, non-kept candidates move to `deck.discard` immediately.
 - If a Joker is among any row’s candidates for the round, `deck.reshuffleAfterRound = true`.
-- Token art preview: UI derives token art at render time from linked `tokenIds` via `scene.items.getItems` and `isImage(item) ? item.image.url : undefined`. For grouped rows, show the first token’s art or a compact mosaic (future polish). No need to persist art in scene metadata.
+- Card IDs are deterministic (rank+suit): "AS" = Ace of Spades, "10H" = Ten of Hearts, "JK-R" = Red Joker, "JK-B" = Black Joker. No UUID generation needed.
+- Undo system is local-only: each GM client maintains its own undo history in component state, not synced across clients.
+- Token art is deferred: initial implementation stores only `tokenIds` for linkage, visual previews added later.
 
 ---
 
@@ -116,7 +128,8 @@ Notes:
 
 4.1 Deck init
 
-- Build a standard 54-card set: 52 suited cards + 2 Jokers.
+- Build a standard 54-card set: 52 suited cards + 2 Jokers with deterministic IDs (e.g., "AS", "10H", "JK-R", "JK-B").
+- Create static `cards` lookup table mapping IDs to Card objects for rendering.
 - Shuffle using Fisher–Yates with a fresh RNG seed when starting an encounter (or when reshuffling).
 - Initial state: `round=0`, `phase='setup'`, `turn.activeRowId=null`, `deck.reshuffleAfterRound=false`. GM can add participants during `setup` without dealing cards.
 
@@ -282,14 +295,14 @@ UX affordances:
 
 - Item Context Menu: Toggle “Add to Initiative” / “Remove from Initiative”
   - Filters: `roles: ["GM"]`, `permissions: ["UPDATE"]`, `every: [ {key: "type", value: "IMAGE"}, {key: "layer", value: "CHARACTER", coordinator: "||"}, {key: "layer", value: "MOUNT"} ]`. “Add” also filters on our plugin metadata key being undefined for clean add.
-  - On add: create a row with `tokenIds=[item.id]` (for each selected token or as configured); default `type` to `NPC_WILD` (GM can adjust later). Store `{ rowId }` under the item’s plugin metadata for reverse lookup.
+  - On add: create a row with `tokenIds=[item.id]` (for each selected token or as configured); default `type` to `NPC` (GM can adjust later). Store `{ rowId }` under the item's plugin metadata for reverse lookup.
   - On remove: remove row. If the row had a card, move it to discard; clear the item’s plugin metadata link.
   - Scene Metadata: `rodeo.owlbear.initiative-tracker/state` holds `EncounterState`.
-- Multi-client sync pattern (multi-GM, players read-only, simple):
+- Multi-client sync pattern (single-GM, players read-only, simple):
   - Single source of truth: `EncounterState` is stored entirely under the plugin key in `scene.metadata`. Local UI always binds directly to this state; there is no divergent local copy.
-  - Write path (GM): Use the latest in-memory state from `onMetadataChange`, compute a new state (and snapshot for undo), and call `OBR.scene.setMetadata({...existing, [pluginKey]: newState})`. No additional revisioning; last write wins.
-  - Read path (all): Subscribe to `OBR.scene.onMetadataChange` and replace local state wholesale from the plugin key. Any external GM change fully updates the UI.
-  - Conflict handling: If two GMs act simultaneously, last write wins. Undo is available to correct mistakes; no attempt is made to rebase or deduplicate.
+  - Write path (GM): Use the latest in-memory state from `onMetadataChange`, compute a new state (and local undo snapshot), and call `OBR.scene.setMetadata({...existing, [pluginKey]: newState})`. No additional revisioning needed.
+  - Read path (all): Subscribe to `OBR.scene.onMetadataChange` and replace local state wholesale from the plugin key. GM changes fully update all client UIs.
+  - Undo: Local-only (not synced) - GM maintains undo history in component state, can revert without affecting other clients.
   - Privacy: No security hardening. Players’ clients may be able to inspect metadata; acceptable by design.
 
 - Item Metadata: `rodeo.owlbear.initiative-tracker/metadata` holds `{ rowId: string }` per token to tie tokens to rows.
@@ -301,11 +314,11 @@ UX affordances:
 
 - Deck exhaustion mid-round: reshuffle discard to remaining and continue drawing.
 - Duplicate tokens in multiple rows: prevent by validating `tokenIds` uniqueness when adding.
-- Concurrent edits: last-write-wins with `updatedAt` and `updatedBy` for context; GM can fix.
+- Rare concurrent edits: simple last-write-wins; local undo allows recovery.
 - Missing card after End Round with unresolved chooser: keep previously selected keeper or initial card; discard the rest.
 - Joker reshuffle flag: set when any row has a Joker drawn among candidates; applied at End Round.
  - Distinct Jokers: both Black and Red Jokers exist. Black sorts ahead of Red for initiative; both trigger the reshuffle flag when seen.
- - Ending initiative: `End Initiative` moves to `phase='setup'`, resets `round=0`, clears `turn.activeRowId`, `deck.reshuffleAfterRound`, and per-round flags; reinitializes the deck (fresh shuffle). Rows remain for reuse by default; if the GM chooses “Clear all participants,” delete rows and unlink any token metadata, clear the undo stack, and reset privacy/settings to defaults.
+ - Ending initiative: `End Initiative` moves to `phase='setup'`, resets `round=0`, clears `turn.activeRowId`, `deck.reshuffleAfterRound`, and per-round flags; reinitializes the deck (fresh shuffle). Rows remain for reuse by default; if the GM chooses "Clear all participants," delete rows and unlink any token metadata, and reset privacy/settings to defaults.
  - Removing a participant mid-round: discard `currentCardId` to deck.discard and, if it was the active row, select the next logical row in the computed order; otherwise keep the current selection. Clamp to none if list becomes empty.
 
 ---
@@ -315,70 +328,146 @@ UX affordances:
 - 40+ rows target: keep sorting efficient (pure function on current cards) and avoid unnecessary metadata writes.
 - Keep deck and rows as normalized records; arrays hold stable ids.
 - Throttle metadata writes (batch small changes when possible) to avoid excessive network chatter.
-- Undo stack snapshots are bounded by count (configurable; default 20) to prevent unbounded metadata growth.
+- Local undo stacks are bounded by count (10-20 snapshots) to prevent memory growth.
 
 ---
 
 ## 10) Implementation Plan (Incremental)
 
-P1 — State & Plumbing
+**P1 — State & Metadata Sync**
+- Define `EncounterState` types (without undo fields)
+- Implement scene metadata read/write helpers  
+- Subscribe to `onMetadataChange`
+- Bootstrap empty state (round=0, phase='setup')
+- **Test**: Verify state persists across refresh
 
-- Add `EncounterState` in scene metadata; bootstrap empty state (round=0, phase='setup').
-- Implement scene metadata read/merge/write and onChange subscription.
-- Add deck constructor and shuffle helpers (no UI yet).
+**P2 — Deck System**
+- Build deck with deterministic IDs (`getCardId` helper)
+- Implement shuffle (Fisher-Yates)
+- Draw/discard operations
+- **Test**: Console commands to draw/shuffle/verify deck state
 
-P2 — Basic UI (Read-Only Display)
+**P3 — Basic Header UI**
+- Render header bar with title "SWADE Initiative"
+- Show round indicator (e.g., "Setup" or "Round 3")
+- No buttons yet, just display
+- **Test**: Header renders, shows correct round
 
-- Render header + empty state; show participant list bound to metadata rows (name + token thumbnail).
-- Add always-visible Undo (disabled initially). No actions yet.
+**P4 — Empty Participant List**
+- Empty participant list component
+- "No participants" message
+- List container with proper scrolling setup
+- **Test**: Empty state displays correctly
 
-P3 — Add/Remove Participants
+**P5 — Add Participants (Basic)**
+- "Add Participant" button in header (GM only)
+- Simple dialog: Name + Type (PC/NPC/GROUP)
+- Add to state, display in list (name only)
+- **Test**: Can add participants, they persist
 
-- Header “Add Participant” dialog (PC | NPC | GROUP; optional tokens). Defaults depend on phase.
-- Context menu “Add/Remove to Initiative” linking `{rowId}` in item metadata.
-- Remove participant in setup (unlink only). Still no dealing.
+**P6 — Remove Participants**
+- Remove button per row (GM only)
+- Delete from state
+- **Test**: Can remove, state updates correctly
 
-P4 — Deal Round & Sorting
+**P7 — Deal Round**
+- "Deal Round" button (changes to "Start & Deal Round" when round=0)
+- Deal cards to eligible participants
+- Display cards in rows
+- **Test**: Cards dealt, displayed correctly
 
-- Implement `Deal Round` (starts Round 1 from setup), card rendering, computed order (Black Joker > Red Joker > A→2 with S>H>D>C), round indicator, Joker reshuffle flag.
-- End Round transitions to between_rounds; End Initiative resets to setup (with Keep/Clear participants option).
+**P8 — Card Sorting**
+- Implement SWADE sort order
+- Display participants in sorted order
+- Joker reshuffle flag detection
+- **Test**: Correct order (Jokers→A→2, S>H>D>C)
 
-P5 — Turn Navigation (Prev/Next) + Privacy
+**P9 — End Round**
+- "End Round" button
+- Apply reshuffle if needed
+- Clear per-round state
+- **Test**: Reshuffle happens after Joker round
 
-- Add `Next`/`Prev` controls with `activeRowId`; “Next & Reveal” when the next is hidden NPC/Group; auto-reveal on activation.
-- Add global “Hide NPC cards from players” toggle.
+**P10 — Local Undo System**
+- Local undo stack (not synced)
+- Undo button in header
+- Snapshot before each action
+- **Test**: Can undo last action, doesn't affect other clients
 
-P6 — Hold, Act Now, Inactive
+**P11 — Turn Navigation**
+- Prev/Next buttons
+- Active row highlighting
+- No wrap-around at list ends
+- **Test**: Navigation works, highlights correct row
 
-- Row actions: Hold toggle (skip on next deal), Inactive toggle (never draws), Act Now (After/Interrupt Before) with transient insertion and “No card (Act Now)” chip.
+**P12 — Hold Toggle**
+- Hold button per row
+- Skip held participants on next deal
+- Visual indicator for held status
+- **Test**: Hold carries across rounds correctly
 
-P7 — Replacement Draws
+**P13 — Act Now**
+- Act Now button for held participants
+- Before/After placement chooser
+- Clear hold and activate
+- **Test**: Proper insertion in turn order
 
-- Modal chooser per row; “+1” to draw additional; choose keeper; discard non-kept immediately.
+**P14 — Inactive Toggle**
+- Inactive button per row
+- Never deal to inactive
+- Visual indicator (greyed out)
+- **Test**: Inactive participants skip dealing
 
-P8 — Groups (Optional in MVP scope)
+**P15 — Privacy System**
+- Toggle in header (GM only)
+- Hide NPC/Group cards from players
+- Auto-reveal on activation
+- **Test**: Player view hides appropriately
 
-- Grouping support for shared-card rows (type=GROUP); basic controls to convert rows or aggregate tokens.
+**P16 — Replacement Draws**
+- "Draw Additional Card" button per row
+- Card chooser modal
+- Select keeper, discard others
+- **Test**: Multiple cards, keeper selection works
 
-P9 — Polish
+**P17 — Late Joiners**
+- "Deal now" vs "Join next round" option
+- Add mid-round with immediate card
+- **Test**: Late joiner appears in correct sort position
 
-- UX refinement; empty states; small help text.
-- Undo snapshots (default 20) wired across actions; performance passes on computed sort.
+**P18 — Context Menu Integration**
+- "Add to Initiative" on tokens
+- "Remove from Initiative"
+- Link tokens to rows
+- **Test**: Token selection creates participant
+
+**P19 — Groups/Extras Support**
+- Group multiple tokens to one row
+- Show member count
+- **Test**: Groups share single card
+
+**P20 — Polish**
+- Loading states
+- Error handling
+- Keyboard shortcuts
+- Performance optimization
 
 ---
 
 ## 11) Module Plan (Files)
 
-- `src/state/types.ts` — EncounterState, Card, ParticipantRow, helpers.
-- `src/state/sceneState.ts` — read/write scene metadata, subscriptions, batching.
-- `src/deck/deck.ts` — buildDeck, shuffle, draw, discard, reshuffle.
-- `src/sort/order.ts` — scoring and ordering logic.
+- `src/state/types.ts` — EncounterState, Card, ParticipantRow, LocalComponentState, helpers.
+- `src/state/sceneState.ts` — read/write scene metadata, subscriptions (no batching complexity).
+- `src/state/localState.ts` — Local undo management hooks/utilities.
+- `src/deck/deck.ts` — buildDeck, shuffle, draw, discard, reshuffle with deterministic IDs.
+- `src/deck/cardIds.ts` — getCardId helper and card generation utilities.
+- `src/sort/order.ts` — SWADE sorting and ordering logic.
 - `src/components/HeaderBar.tsx` — header controls and round info.
-- `src/components/UndoButton.tsx` — always-visible undo control.
+- `src/components/UndoButton.tsx` — undo control using local state.
 - `src/components/ParticipantList.tsx` — list wrapper.
 - `src/components/ParticipantRow.tsx` — row UI with actions.
 - `src/components/CardChooser.tsx` — replacement draw modal.
-- `src/obr/contextMenu.ts` — add/remove participants, grouping hooks.
+- `src/obr/contextMenu.ts` — add/remove participants, token linking.
 - Migrate existing `InitiativeTracker.tsx` to orchestrate new components.
 
 ---
@@ -386,7 +475,7 @@ P9 — Polish
 ## 12) Testing Strategy
 
 - Unit tests (pure logic): deck ops, sorting, hold/deal lifecycle.
-- Manual integration in OBR dev room for multi-client sync and privacy behavior.
+- Manual integration in OBR dev room for single-GM sync and privacy behavior.
 - Scenarios from PRD Acceptance Tests mapped to test checklists.
 - Turn navigation tests: pointer increments/decrements without wrap; `Next` disabled at last row; End Round is explicit and separate.
 - Start/End tests: `Deal Round` from `round=0` starts Round 1; `End Initiative` resets to setup without removing rows; Add Participant default Join timing flips appropriately based on `round`.
@@ -398,8 +487,8 @@ P9 — Polish
   - Interrupt Before: insertion displays immediately before the current active row; pointer moves to inserted row; original current becomes next; no draw if no card; chip renders.
   - Shift+click selects non-default.
   - Optional swap toast flips placement.
-- Undo tests: sequential actions can be undone in reverse order; undo reverts deck, rows, active pointer, and privacy flags accurately. Bounded history does not prevent undoing the last N actions.
-- Multi-GM concurrency tests: two simulated writers perform near-simultaneous actions (e.g., Next, Hold toggle). Verify last-write-wins resolution and that UIs fully refresh from scene metadata without divergence. Confirm Undo can revert unintended results.
+- Undo tests: sequential actions can be undone in reverse order; undo reverts deck, rows, active pointer, and privacy flags accurately. Local undo does not affect other clients.
+- Single-GM tests: verify state syncs properly to player clients; player view updates when GM makes changes.
 
 ---
 
@@ -407,8 +496,8 @@ P9 — Polish
 
 1) Privacy behavior — DECIDED: NPC/Group rows are hidden from players until they become active; on activation, they appear in their correct sorted position. (PRD delta; see below.)
 2) Unresolved replacement chooser at End Round: This design keeps the initial (or last selected) card and discards others—no auto “best/worst”. Confirm acceptable.
-3) Permissions model: Players are read-only for MVP; all actions are GM-only. Multiple GMs may act; last-write-wins. Confirmed.
-4) Simplifications — DECIDED for MVP: Removed per-row `ownerId` and the persistent `audit` log. Undo provides recovery; `updatedAt/updatedBy` remain for lightweight context.
+3) Permissions model: Players are read-only for MVP; all actions are GM-only. Single GM assumption. Confirmed.
+4) Simplifications — DECIDED for MVP: Removed per-row `ownerId`, persistent `audit` log, `updatedAt/updatedBy` tracking, and synced undo. Local undo provides recovery without metadata overhead.
 
 PRD delta (acceptance test update suggestion):
  - Replace PRD §10.7 with: “With privacy ON, GM sees all card faces; players do not see NPC/Group rows until they are active. On activation, the row appears to players with full value in the correct sorted position.”
@@ -419,9 +508,9 @@ PRD delta (acceptance test update suggestion):
 
 ## 14) Risks & Mitigations
 
-- Privacy is UI-only: Call this out in README and settings tooltip; acceptable for table etiquette.
-- Concurrency races: Last-write-wins model; Undo allows recovery from unintended changes.
-- Grouping UX complexity: Start with simple “Add to group” flow; defer drag-and-drop sorting.
+- Privacy is UI-only: Acceptable for friendly game table etiquette.
+- Single GM assumption: Rare multi-GM edge cases use simple last-write-wins; local undo allows recovery.
+- Grouping UX complexity: Start with simple "Add to group" flow; defer drag-and-drop sorting.
 
 ---
 
