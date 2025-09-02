@@ -14,7 +14,7 @@ export function InitiativeHeader({
   return (
     <>
       <CardHeader
-        title="Initiative"
+        title="SWADE Initiative"
         action={action}
         titleTypographyProps={{
           sx: {

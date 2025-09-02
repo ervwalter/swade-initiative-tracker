@@ -10,13 +10,15 @@ import SkipNextRounded from "@mui/icons-material/SkipNextRounded";
 import OBR, { isImage, Item, Player } from "@owlbear-rodeo/sdk";
 
 import { InitiativeItem } from "./InitiativeItem";
-
-
-
 import { InitiativeListItem } from "./InitiativeListItem";
 import { getPluginId } from "./getPluginId";
 import { InitiativeHeader } from "./InitiativeHeader";
 import { isPlainObject } from "./isPlainObject";
+
+// SWADE state imports
+import { EncounterState } from "./state/types";
+import { getOrInitializeState, subscribeToEncounterState } from "./state/sceneState";
+import { useUndoState } from "./state/localState";
 
 /** Check that the item metadata is in the correct format */
 function isMetadata(
@@ -32,6 +34,10 @@ function isMetadata(
 export function InitiativeTracker() {
   const [initiativeItems, setInitiativeItems] = useState<InitiativeItem[]>([]);
   const [role, setRole] = useState<"GM" | "PLAYER">("PLAYER");
+  
+  // SWADE state management
+  const [swadeState, setSwadeState] = useState<EncounterState | null>(null);
+  const undoState = useUndoState();
 
   useEffect(() => {
     const handlePlayerChange = (player: Player) => {
@@ -39,6 +45,40 @@ export function InitiativeTracker() {
     };
     OBR.player.getRole().then(setRole);
     return OBR.player.onChange(handlePlayerChange);
+  }, []);
+
+  // Initialize and subscribe to SWADE state
+  useEffect(() => {
+    let isActive = true;
+
+    // Initialize state
+    getOrInitializeState().then(state => {
+      if (isActive) {
+        setSwadeState(state);
+        console.log('[SWADE] Initial state loaded:', state);
+      }
+    });
+
+    // Subscribe to state changes
+    const unsubscribe = subscribeToEncounterState((state) => {
+      if (isActive) {
+        setSwadeState(state);
+        if (state) {
+          console.log('[SWADE] State updated:', {
+            round: state.round,
+            phase: state.phase,
+            participantCount: Object.keys(state.rows).length,
+            deckRemaining: state.deck.remaining.length,
+            deckDiscard: state.deck.discard.length
+          });
+        }
+      }
+    });
+
+    return () => {
+      isActive = false;
+      unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -202,9 +242,11 @@ export function InitiativeTracker() {
     <Stack height="100vh">
       <InitiativeHeader
         subtitle={
-          initiativeItems.length === 0
-            ? "Select a character to start initiative"
-            : undefined
+          swadeState ? (
+            `Round ${swadeState.round} | Phase: ${swadeState.phase} | Cards: ${swadeState.deck.remaining.length} remaining, ${swadeState.deck.discard.length} discarded`
+          ) : initiativeItems.length === 0 ? (
+            "SWADE Initiative - Select a character to start initiative"
+          ) : undefined
         }
         action={
           <IconButton
