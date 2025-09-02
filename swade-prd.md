@@ -16,8 +16,8 @@ It should **behave like a shared deck at a physical table**, while removing only
 - **Inactive/Incapacitated flag**: unit remains listed but **does not draw**.
 - **Simple replacement draw**: a **Draw Additional Card** button; show *all* cards drawn this round for that unit; the owner **picks the keeper** (table decides best/worst).
 - **Late joiners**: add mid-round (deal now) or join next round (no card yet).
-- **Light permissions**: **GM can change anyone**; players can only change their own.
-- **Optional GM privacy**: Non-player (GM-controlled) cards shown **face-down to players** (GM sees all).
+- **Light permissions (MVP)**: **GM can change anyone**; players have a **read-only** view.
+- **Optional GM privacy**: Non-player (GM-controlled) cards are **hidden from players until revealed** (GM sees all).
 
 ### 2.2 Non-Goals
 - No Bennies ledger, Joker’s Wild payouts, Conviction, damage, or status automation.
@@ -40,7 +40,7 @@ It should **behave like a shared deck at a physical table**, while removing only
 
 ## 4) Personas
 - **GM Gina (primary)**: Wants deck handling, clean order, quick **Hold**/**Act Now**, optional hidden NPC cards, and authority to fix anything.
-- **Player Priya**: Wants to see her card clearly, draw replacement(s) when allowed, choose the keeper herself, and toggle Hold.
+- **Player Priya**: Wants to clearly see the current order and her card; read-only (communicates requests to the GM).
 
 ---
 
@@ -54,7 +54,7 @@ It should **behave like a shared deck at a physical table**, while removing only
 - If any Joker is dealt this round, a **“reshuffle at round end”** flag appears.
 
 ### US2 — Hold (bookkeeping only)
-**As a player/GM**, I can **toggle Hold** on a participant.  
+**As a GM**, I can **toggle Hold** on a participant.  
 **AC:**
 - When set during a round, the card remains visible for that round; the row is marked **On Hold**.
 - On the next **Deal Round**, **On Hold rows are skipped** (no new card).
@@ -68,11 +68,11 @@ It should **behave like a shared deck at a physical table**, while removing only
 - Inactive rows **never draw** until reactivated.
 
 ### US4 — Replacement Draw (simple & universal)
-**As a player/GM**, I can press **Draw Additional Card** to add one more card to my choices.  
+**As a GM**, I can press **Draw Additional Card** to add one more card to a participant’s choices.  
 **AC:**
 - Each press draws exactly **one** additional card into a **Card Chooser**.
 - The chooser shows the **initial card** plus all **additional** cards drawn this round for that row.
-- The **owner selects the keeper**; non-kept cards go to **discard**.
+- The **GM selects the keeper** after the table decides; non-kept cards go to **discard**.
 - No automatic “best/worst” enforcement—**table decides**.
 
 ### US5 — Late Joiners & Groups
@@ -81,19 +81,18 @@ It should **behave like a shared deck at a physical table**, while removing only
 - Options: **Deal now** (immediate card) or **Join next round** (no card yet).
 - I can **group Extras** to a single row; group draw yields one card for the group.
 
-### US6 — GM Privacy Mode (Face-Down NPC Cards)
+### US6 — GM Privacy Mode (Hidden NPC Cards)
 **As a GM**, I can keep non-player cards hidden from players.  
 **AC:**
-- Setting: **NPC/GM-controlled cards face-down to players**; GM sees values.
-- Player view shows hidden cards with a placeholder (e.g., “🂠”) but still lists the row in its sorted position.  
-  > *Note:* This reveals **relative order** but not **exact values**; it matches the “countdown surprise” feel with minimal complexity.
+- Setting: **NPC/GM-controlled cards are hidden from players**; GM sees values.
+- Player view does **not** show unrevealed NPC rows at all; when revealed, they appear in the correct sorted position with full value.
 - Optional per-row **Reveal** control for the GM.
 
-### US7 — Permissions
-**As a GM**, I control the encounter; **as a player**, I control my rows.  
-**AC:**
-- **Players**: can toggle Hold/Act Now on their rows, draw replacement(s), choose keeper.
-- **GM**: can do the above for anyone, plus: add/remove/group rows, override keeper, set Inactive, toggle privacy mode, deal/end round.
+### US7 — Permissions (MVP update)
+**As a GM**, I control the encounter; **players** have read-only views.  
+**AC (MVP):**
+- **Players**: cannot modify rows; view-only (including privacy effects).
+- **GM**: can modify any row; add/remove/group rows; override keeper; set Inactive; toggle privacy mode; deal/end round; navigate turns.
 
 ---
 
@@ -121,10 +120,9 @@ It should **behave like a shared deck at a physical table**, while removing only
 - `Act Now` clears Hold and reinserts the row into the current round’s order (GM places appropriately).
 
 ### 6.5 Replacement Draws
-- Button: **Draw Additional Card** (each press = +1 card).
-- **Card Chooser** modal/grid displays all current choices for that row this round.
-- **Keep This** selects the keeper; others → discard.
-- Choice events logged (for transparency).
+- Action: **Draw Additional Card** (press to open a dialog showing possible card choices, +1 button to draw an additional card in that UI).
+- The GM can review all current choices for that row this round and select a single keeper (after table discussion).
+- Non-kept cards are moved to **discard**.
 
 ### 6.6 Late Joiners
 - GM can **Add Participant** → choose **Deal now** or **Join next round**.
@@ -135,113 +133,39 @@ It should **behave like a shared deck at a physical table**, while removing only
 - **GM view** always shows actual cards and full order.
 - **Player view** shows:  
   - PCs: actual cards.  
-  - NPCs: 🂠 placeholder (still sorted in visible order).  
+  - NPCs: hidden until revealed; on reveal, show full value in correct sorted position.
 - GM can **Reveal** any individual NPC card at will.
 
 ### 6.8 Permissions
 - Ownership per row (GM assignable).
-- **Players** can act on owned rows only; **GM** can act on any row.
-- All actions protected client-side and validated in shared state (room authority = GM).
+- Players have read-only views in MVP; all actions are GM-only.
+- All actions are applied by the GM and mirrored to all clients.
 
 ---
 
-## 7) UX Design (minimal)
+## 7) Notes
 
-### 7.1 Main Bar
-- **[Start Deck] [Deal Round] [End Round] [Reshuffle after round: ON/OFF (auto)] [Add Participant] [Settings]**
+- Detailed UI, data modeling, and state-flow design have been moved to `swade-design.md`.
 
-### 7.2 Turn List (sorted)
-Row example:
-```
-
-\[🃞Q♠]  Kyra (PC)     \[Hold/Act Now] \[Draw Additional Card] \[⋮]
-\[🃏Joker] Goblins (Grp)  JOKER – acts anytime (+2 reminder)   \[Hold/Act Now] \[⋮]
-\[🂠]     Bandit Boss (NPC)  (Hidden to players)               \[Hold/Act Now] \[Draw Additional Card] \[Reveal] \[⋮ GM]
-
-````
-- Icons: **HOLD** badge; **INACTIVE** greys the row.
-- **⋮** menu (GM): Set Inactive/Active, Group/Ungroup, Assign Owner, Remove, Override Keeper.
-
-### 7.3 Card Chooser Modal
-- Title: “Choose your card for **Merisiel**”
-- Grid of card tiles (initial + each additional draw)
-- Buttons on each tile: **Keep This**
-- Footer: “Others will be discarded.” (Cancel = no selection change)
-
----
-
-## 8) Data Model (minimal)
-
-```ts
-type Suit = 'S'|'H'|'D'|'C';
-type Card = { id: string; rank: 2|3|4|5|6|7|8|9|10|'J'|'Q'|'K'|'A'|'JOKER'; suit?: Suit };
-
-interface DeckState {
-  remaining: Card[];
-  discard: Card[];
-  reshuffleAfterRound: boolean;
-  round: number;
-}
-
-type Status = 'Active'|'OnHold'|'Inactive';
-
-interface Participant {
-  id: string;
-  name: string;
-  controller: 'GM'|'PlayerId';
-  type: 'PC'|'NPC-Wild'|'Extras-Group';
-  status: Status;
-  currentCard?: Card;             // absent if OnHold crossing into a new round or Inactive
-  drawChoices: Card[];            // initial + additional this round
-  isHiddenToPlayers?: boolean;    // driven by Privacy setting & controller=GM
-  members?: string[];             // for group rows
-}
-````
-
----
-
-## 9) State & Round Flow
-
-1. **Start Deck** → create deck; round=1; discard=\[]; reshuffleAfterRound=false.
-2. **Add participants** (optionally group).
-3. **Deal Round** → for each participant with `status=Active` (and not OnHold):
-
-   * draw 1 to `currentCard` & `drawChoices=[card]`;
-   * set `reshuffleAfterRound=true` if card is Joker.
-4. **Sort** by Joker → rank → suit.
-5. **During round**:
-
-   * **Hold** toggled: badge on; card remains for this round.
-   * **Draw Additional Card**: push into `drawChoices`; open chooser; on **Keep**, move non-kept to `discard` and set `currentCard`.
-   * **Act Now** (from Hold): clear Hold; insert into order (GM chooses exact placement).
-6. **End Round**:
-
-   * Discard all `currentCard`s;
-   * If any Joker seen: **shuffle** (`discard + remaining`);
-   * For rows still **OnHold**: **do not deal** next round and **clear `currentCard`**;
-   * round++.
-
----
-
-## 10) Non-Functional Requirements
+## 8) Non-Functional Requirements
 
 * **Simplicity**: <= 2 clicks for GM to start/deal each round.
-* **Clarity**: Large card glyphs, suit icons, concise badges (HOLD/INACTIVE/JOKER).
+* **Clarity**: Clear visuals and concise status indicators.
 * **Reliability**: Single shared state source; GM is authoritative.
 * **Performance**: Handle 40+ rows (large encounters) without perceptible lag.
 * **Auditability**: Minimal action log: deal, replacement choice, hold toggle, reveal.
 
 ---
 
-## 11) Configuration
+## 9) Configuration (MVP)
 
 * **Privacy**: “Hide NPC cards from players” (default OFF).
-* **Allow player self-management**: ON (players can Hold/Act Now, draw additional, choose keeper).
+* **Player self-management**: OFF (players read-only in MVP).
 * **GM override**: always available.
 
 ---
 
-## 12) Acceptance Tests
+## 10) Acceptance Tests
 
 1. **Deal & Sort**
 
@@ -253,7 +177,7 @@ interface Participant {
 
 3. **Hold Across Rounds**
 
-   * If a PC toggles **Hold** mid-round, they keep their card for the rest of that round.
+   * If the GM toggles **Hold** on a PC mid-round, they keep their card for the rest of that round.
    * If still holding at **End Round**, they are **not dealt** at the next **Deal Round**; their row shows **no card** but remains **On Hold**.
    * **Act Now** reinserts them; subsequent rounds deal normally if not holding.
 
@@ -263,8 +187,8 @@ interface Participant {
 
 5. **Replacement Draws**
 
-   * Pressing **Draw Additional Card** adds exactly one more card to the chooser.
-   * Choosing a keeper sets `currentCard` to that card; others go to discard.
+   * GM pressing **Draw Additional Card** adds exactly one more card to the chooser.
+   * GM choosing a keeper sets `currentCard` to that card; others go to discard.
    * Multiple presses accumulate multiple choices.
 
 6. **Late Joiners**
@@ -273,27 +197,24 @@ interface Participant {
 
 7. **GM Privacy**
 
-   * With privacy ON, GM sees all card faces; players see 🂠 for NPC rows; ordering remains visible to players, values hidden.
-   * **Reveal** shows an NPC’s card to players.
+   * With privacy ON, GM sees all card faces; players do not see unrevealed NPC rows; on **Reveal**, the row appears to players with full value in correct sorted position.
 
 8. **Permissions**
 
-   * Player can only modify their own row(s); GM can modify any row.
+   * Players have read-only views; GM can modify any row.
 
 ---
 
-## 13) Open Questions (for the team)
+## 11) Open Questions (for the team)
 
-* **Face-down ordering leak**: Do we keep NPC rows sorted (revealing relative order) or collapse them under a “Hidden NPCs” bucket until reveal? (Current spec: keep sorted, just hide value for minimal complexity.)
-* **Group management UX**: From OBR tokens or from the list? (Current spec: both; MVP can be list-only.)
+* None for MVP (privacy behavior is defined as hidden-until-revealed; players read-only).
 
 ---
 
-## 14) Future (nice-to-have, *not* in MVP)
+## 12) Future (nice-to-have, *not* in MVP)
 
 * Player-side **Countdown bar** that highlights the current rank.
 * Optional **single card draw** utility outside encounters (same deck object).
 * Visual themes (card backs/skins), compact mode, reversible suit-order variant.
 
 ---
-
