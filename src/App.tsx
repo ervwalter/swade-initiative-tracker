@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Provider } from 'react-redux';
 
 import OBR from "@owlbear-rodeo/sdk";
-import { InitiativeHeader } from "./InitiativeHeader";
+import { CardHeader, Divider } from "@mui/material";
 import { InitiativeTracker } from "./InitiativeTracker";
 import { store } from "./store/store";
 import { subscribeToOBRChanges } from "./store/obrSync";
@@ -33,7 +33,21 @@ export function App() {
   } else {
     // Show a basic header when the scene isn't ready
     return (
-      <InitiativeHeader subtitle="Open a scene to use the initiative tracker" />
+      <>
+        <CardHeader 
+          title="SWADE Initiative" 
+          subheader="Open a scene to use the initiative tracker"
+          titleTypographyProps={{
+            sx: {
+              fontSize: "1.125rem",
+              fontWeight: "bold",
+              lineHeight: "32px",
+              color: "text.primary",
+            },
+          }}
+        />
+        <Divider variant="middle" />
+      </>
     );
   }
 }

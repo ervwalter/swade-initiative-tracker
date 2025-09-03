@@ -9,7 +9,7 @@ import OBR, { isImage, Item, Player } from "@owlbear-rodeo/sdk";
 import { InitiativeItem } from "./InitiativeItem";
 import { InitiativeListItem } from "./InitiativeListItem";
 import { getPluginId } from "./getPluginId";
-import { InitiativeHeader } from "./InitiativeHeader";
+import { HeaderBar } from "./components/HeaderBar";
 import { isPlainObject } from "./isPlainObject";
 
 // Redux imports
@@ -232,24 +232,7 @@ export function InitiativeTracker() {
 
   return (
     <Stack height="100vh">
-      <InitiativeHeader
-        subtitle={
-          swadeState ? (
-            `Round ${gameSummary.round} | Phase: ${gameSummary.phase} | Cards: ${deckCounts.remaining}R/${deckCounts.inPlay}P/${deckCounts.discard}D`
-          ) : initiativeItems.length === 0 ? (
-            "SWADE Initiative - Select a character to start initiative"
-          ) : undefined
-        }
-        action={
-          <IconButton
-            aria-label="next"
-            onClick={handleNextClick}
-            disabled={initiativeItems.length === 0}
-          >
-            <SkipNextRounded />
-          </IconButton>
-        }
-      />
+      <HeaderBar />
       <Box sx={{ overflowY: "auto" }}>
         <List ref={listRef}>
           {initiativeItems
