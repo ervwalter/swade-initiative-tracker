@@ -2,37 +2,7 @@
 
 import { EncounterState } from "./types";
 
-/**
- * Create a deep copy of encounter state for safe mutations
- * Uses structured approach instead of JSON.parse/stringify for better performance and reliability
- */
-export function deepCopyEncounterState(state: EncounterState): EncounterState {
-  return {
-    ...state,
-    deck: {
-      ...state.deck,
-      remaining: [...state.deck.remaining],
-      inPlay: [...state.deck.inPlay],
-      discard: [...state.deck.discard]
-    },
-    cards: { ...state.cards }, // Static lookup, shallow copy is fine
-    rows: Object.fromEntries(
-      Object.entries(state.rows).map(([id, row]) => [
-        id,
-        {
-          ...row,
-          tokenIds: [...row.tokenIds],
-          candidateIds: [...row.candidateIds]
-        }
-      ])
-    ),
-    turn: {
-      ...state.turn,
-      actNow: state.turn.actNow ? [...state.turn.actNow] : undefined
-    },
-    settings: { ...state.settings }
-  };
-}
+// deepCopyEncounterState removed - RTK with Immer handles immutability automatically
 
 /**
  * Validate that a state object has the expected structure

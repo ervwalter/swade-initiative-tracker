@@ -268,17 +268,16 @@ undo(); // Reverts local state and triggers queueOBRSync()
 ```json
 {
   "dependencies": {
-    "zustand": "^4.4.7",
-    "immer": "^10.0.3",
-    "zustand-middleware-temporal": "^1.3.1"
+    "@reduxjs/toolkit": "^2.9.0",
+    "react-redux": "^9.2.0"
   }
 }
 ```
 
 ### Bundle Size Impact:
-- **Zustand**: ~2.2kb gzipped
-- **Immer**: ~12kb gzipped  
-- **Total added**: ~14kb (acceptable for the benefits)
+- **Redux Toolkit**: ~12kb gzipped (includes Immer, Redux, Reselect)
+- **React-Redux**: ~3kb gzipped  
+- **Total added**: ~15kb (acceptable for the benefits and ecosystem)
 
 ---
 

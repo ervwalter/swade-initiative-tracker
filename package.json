@@ -20,8 +20,10 @@
     "@mui/icons-material": "^5.10.6",
     "@mui/material": "^5.10.7",
     "@owlbear-rodeo/sdk": "^3.1.0",
+    "@reduxjs/toolkit": "^2.9.0",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "react-redux": "^9.2.0"
   },
   "devDependencies": {
     "@types/react": "^19.1.11",

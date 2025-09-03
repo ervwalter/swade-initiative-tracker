@@ -98,7 +98,8 @@ export function createTestParticipant(state: EncounterState, name: string): stri
     onHold: false,
     currentCardId: undefined,
     candidateIds: [],
-    drewThisRound: false
+    drewThisRound: false,
+    revealed: true
   };
   
   console.log(`[GAME] Created test participant: ${name} (${id})`);

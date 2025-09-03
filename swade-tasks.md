@@ -40,23 +40,27 @@ Based on the implementation plan from `swade-design.md` with 20 incremental, tes
 
 ---
 
-## Phase 2.5 - State Management Refactor  
-**Goal**: Migrate from manual state management to Zustand + Immer
+## Phase 2.5 - State Management Refactor ✅ COMPLETE
+**Goal**: Migrate from manual state management to Redux Toolkit (RTK)
 
-- [ ] Install Zustand and Immer dependencies (`yarn add zustand immer`)
-- [ ] Create `src/store/swadeStore.ts` with initial store structure
-- [ ] Implement OBR metadata storage adapter for persistence
-- [ ] Create store actions for deck operations (drawCard, shuffleDeck, etc.)
-- [ ] Create store actions for game operations (createParticipant, dealTo, endRound)
-- [ ] Replace console utilities to use store actions directly
-- [ ] Update InitiativeTracker to use store instead of local state management
-- [ ] Remove legacy state management code (`deepCopyEncounterState`, manual state copying)
-- [ ] **Test**: Multi-client sync works with new store
-- [ ] **Test**: Console utilities work with store-based actions
-- [ ] **Test**: State persists across refresh using Zustand persistence
+- [x] Install RTK and React-Redux dependencies (`yarn add @reduxjs/toolkit react-redux`)
+- [x] Create `src/store/store.ts` with RTK store configuration
+- [x] Create `src/store/swadeSlice.ts` with Redux slice and actions
+- [x] Create `src/store/selectors.ts` with memoized selectors
+- [x] Create `src/store/obrSync.ts` with OBR metadata sync middleware
+- [x] Implement OBR metadata storage adapter for persistence
+- [x] Create store actions for deck operations (drawCard, shuffleDeck, etc.)
+- [x] Create store actions for game operations (createParticipant, dealTo, endRound)
+- [x] Update InitiativeTracker to use Redux hooks instead of local state management
+- [x] Remove legacy state management code (`deepCopyEncounterState`, manual state copying)
+- [x] Remove console utilities (simplified for cleaner codebase)
+- [x] **Test**: Multi-client sync works with RTK store and OBR middleware
+- [x] **Test**: State persists across refresh using RTK + OBR metadata
+- [x] **Test**: All deck operations work with Immer immutability
+- [x] **Code Review**: Completed with fixes for error handling and cleanup
 
-**Design Reference**: `swade-design-state-refactor.md`
-**Key Files**: `src/store/swadeStore.ts`, `src/store/obrStorage.ts`
+**Design Reference**: `swade-design-state-refactor.md` (updated for RTK)
+**Key Files**: `src/store/store.ts`, `src/store/swadeSlice.ts`, `src/store/obrSync.ts`, `src/store/selectors.ts`
 
 ---
 

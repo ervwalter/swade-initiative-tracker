@@ -3,7 +3,7 @@
 
 import { useState, useCallback } from 'react';
 import { EncounterState } from './types';
-import { deepCopyEncounterState } from './stateUtils';
+// Note: deepCopyEncounterState removed - not needed with RTK/Immer
 
 const MAX_UNDO_STACK_SIZE = 20;
 
@@ -31,11 +31,10 @@ export function useUndoState(): UndoState {
   }, [undoStack]);
 
   const pushUndoSnapshot = useCallback((state: EncounterState) => {
-    // Deep copy the state to avoid reference issues
-    const stateCopy = deepCopyEncounterState(state);
-    
+    // Note: RTK handles immutability, so we can store state directly
+    // (though this undo system is not currently used with RTK)
     setUndoStack(prev => {
-      const newStack = [...prev, stateCopy];
+      const newStack = [...prev, state];
       
       // Limit stack size
       if (newStack.length > MAX_UNDO_STACK_SIZE) {

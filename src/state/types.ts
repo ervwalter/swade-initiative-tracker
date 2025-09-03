@@ -31,6 +31,7 @@ export interface ParticipantRow {
   type: ParticipantType;
   inactive: boolean;
   onHold: boolean;            // carryover hold into subsequent rounds
+  revealed: boolean;          // true if visible to players (privacy system)
 
   // Cards for the current round
   currentCardId?: CardId;     // keeper for this round (optional if holding into new round)

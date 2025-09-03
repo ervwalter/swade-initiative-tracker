@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import Stack from "@mui/material/Stack";
-import IconButton from "@mui/material/IconButton";
-import List from "@mui/material/List";
-import Box from "@mui/material/Box";
+import { Stack, IconButton, List, Box } from "@mui/material";
 
 import SkipNextRounded from "@mui/icons-material/SkipNextRounded";
 
@@ -15,14 +12,11 @@ import { getPluginId } from "./getPluginId";
 import { InitiativeHeader } from "./InitiativeHeader";
 import { isPlainObject } from "./isPlainObject";
 
-// SWADE state imports
-import { EncounterState } from "./state/types";
-import { getOrInitializeState, subscribeToEncounterState, writeEncounterState, initializeEmptyState } from "./state/sceneState";
-import { useUndoState } from "./state/localState";
-import { drawCard, discardCard, reshuffleDeck, logDeckState, testDrawSequence, getDeckSummary, discardFromInPlay } from "./deck/deck";
-import { getCardsInPlay, getParticipantCards, endRound, dealCardToParticipant, createTestParticipant, getGameStateSummary } from "./deck/gameState";
-import { CURRENT_STATE_VERSION } from "./state/migrations";
-import { deepCopyEncounterState } from "./state/stateUtils";
+// Redux imports
+import { useAppDispatch, useAppSelector } from "./store/hooks";
+import { setEncounterState } from "./store/swadeSlice";
+import { selectGameSummary, selectDeckCounts } from "./store/selectors";
+import { getOrInitializeState } from "./state/sceneState";
 
 /** Check that the item metadata is in the correct format */
 function isMetadata(
@@ -39,15 +33,11 @@ export function InitiativeTracker() {
   const [initiativeItems, setInitiativeItems] = useState<InitiativeItem[]>([]);
   const [role, setRole] = useState<"GM" | "PLAYER">("PLAYER");
   
-  // SWADE state management
-  const [swadeState, setSwadeState] = useState<EncounterState | null>(null);
-  const swadeStateRef = useRef<EncounterState | null>(null);
-  const undoState = useUndoState();
-  
-  // Keep ref in sync with state
-  useEffect(() => {
-    swadeStateRef.current = swadeState;
-  }, [swadeState]);
+  // Redux state management
+  const dispatch = useAppDispatch();
+  const swadeState = useAppSelector(state => state.swade);
+  const gameSummary = useAppSelector(selectGameSummary);
+  const deckCounts = useAppSelector(selectDeckCounts);
 
   useEffect(() => {
     const handlePlayerChange = (player: Player) => {
@@ -57,246 +47,31 @@ export function InitiativeTracker() {
     return OBR.player.onChange(handlePlayerChange);
   }, []);
 
-  // Initialize and subscribe to SWADE state
+  // Initialize SWADE state in Redux store
   useEffect(() => {
     let isActive = true;
 
-    console.log('[SWADE] Starting state initialization...');
+    console.log('[RTK] Initializing SWADE state...');
     
-    // Initialize state
     getOrInitializeState().then(state => {
-      console.log('[SWADE] getOrInitializeState resolved with:', state);
       if (isActive) {
-        setSwadeState(state);
-        console.log('[SWADE] Initial state loaded and set in component');
+        console.log('[RTK] Initial state loaded, dispatching to store:', {
+          round: state.round,
+          phase: state.phase,
+          participantCount: Object.keys(state.rows).length,
+          deckRemaining: state.deck.remaining.length
+        });
+        dispatch(setEncounterState(state));
       }
     }).catch(error => {
-      console.error('[SWADE] Failed to initialize state:', error);
-    });
-
-    // Subscribe to state changes
-    const unsubscribe = subscribeToEncounterState((state) => {
-      if (isActive) {
-        setSwadeState(state);
-        if (state) {
-          console.log('[SWADE] State updated:', {
-            round: state.round,
-            phase: state.phase,
-            participantCount: Object.keys(state.rows).length,
-            deckRemaining: state.deck.remaining.length,
-            deckDiscard: state.deck.discard.length
-          });
-        }
-      }
+      console.error('[RTK] Failed to initialize state:', error);
     });
 
     return () => {
       isActive = false;
-      unsubscribe();
     };
-  }, []);
+  }, [dispatch]);
 
-  // Expose deck operations to window for console testing (only run once when first available)
-  useEffect(() => {
-    if (swadeState && !(window as any).swade) {
-      const swadeConsole = {
-        // Current state (always get fresh state)
-        getState: () => {
-          return swadeStateRef.current;
-        },
-        
-        // Deck operations
-        drawCard: () => {
-          const currentState = swadeStateRef.current;
-          if (!currentState) return null;
-          
-          const newState = { 
-            ...currentState, 
-            deck: { 
-              ...currentState.deck, 
-              remaining: [...currentState.deck.remaining],
-              inPlay: [...currentState.deck.inPlay],
-              discard: [...currentState.deck.discard]
-            } 
-          };
-          const result = drawCard(newState.deck);
-          if (result.needsStateUpdate) {
-            console.log('[SWADE] Drew:', result.cardId, 'from deck');
-            writeEncounterState(newState);
-          }
-          return result.cardId;
-        },
-        
-        discardCard: (cardId: string) => {
-          const currentState = swadeStateRef.current;
-          if (!currentState) return;
-          
-          const newState = { 
-            ...currentState, 
-            deck: { 
-              ...currentState.deck, 
-              remaining: [...currentState.deck.remaining],
-              inPlay: [...currentState.deck.inPlay],
-              discard: [...currentState.deck.discard]
-            } 
-          };
-          discardCard(newState.deck, cardId);
-          console.log('[SWADE] Discarded:', cardId);
-          writeEncounterState(newState);
-        },
-        
-        shuffleDeck: () => {
-          const currentState = swadeStateRef.current;
-          if (!currentState) return;
-          
-          const newState = { 
-            ...currentState, 
-            deck: { 
-              ...currentState.deck, 
-              remaining: [...currentState.deck.remaining],
-              inPlay: [...currentState.deck.inPlay],
-              discard: [...currentState.deck.discard]
-            } 
-          };
-          reshuffleDeck(newState.deck);
-          console.log('[SWADE] Reshuffled deck');
-          writeEncounterState(newState);
-        },
-        
-        showDeck: () => {
-          const currentState = swadeStateRef.current;
-          if (!currentState) return null;
-          logDeckState(currentState.deck);
-          return getDeckSummary(currentState.deck, currentState.cards);
-        },
-        
-        testDraw: (count: number = 5) => {
-          const currentState = swadeStateRef.current;
-          if (!currentState) return [];
-          
-          // Input validation
-          if (typeof count !== 'number' || count < 0 || count > 54) {
-            console.error('[SWADE] Invalid count for testDraw (must be 0-54)');
-            return [];
-          }
-          
-          const newState = { 
-            ...currentState, 
-            deck: { 
-              ...currentState.deck, 
-              remaining: [...currentState.deck.remaining],
-              inPlay: [...currentState.deck.inPlay],
-              discard: [...currentState.deck.discard]
-            } 
-          };
-          const drawn = testDrawSequence(newState.deck, Math.floor(count), newState.cards);
-          writeEncounterState(newState);
-          return drawn;
-        },
-        
-        // Game state utilities
-        createTestParticipant: (name: string = 'Test Player') => {
-          const currentState = swadeStateRef.current;
-          if (!currentState) return null;
-          
-          // Basic input validation
-          if (!name || typeof name !== 'string') {
-            console.error('[SWADE] Invalid participant name');
-            return null;
-          }
-          
-          const newState = deepCopyEncounterState(currentState);
-          const participantId = createTestParticipant(newState, name);
-          writeEncounterState(newState);
-          return participantId;
-        },
-        
-        dealTo: (participantId: string) => {
-          const currentState = swadeStateRef.current;
-          if (!currentState) return null;
-          
-          const newState = deepCopyEncounterState(currentState);
-          const cardId = dealCardToParticipant(newState, participantId);
-          if (cardId) {
-            writeEncounterState(newState);
-          }
-          return cardId;
-        },
-        
-        endRound: () => {
-          const currentState = swadeStateRef.current;
-          if (!currentState) return;
-          
-          const newState = deepCopyEncounterState(currentState);
-          endRound(newState);
-          writeEncounterState(newState);
-        },
-        
-        getCardsInPlay: () => {
-          const currentState = swadeStateRef.current;
-          if (!currentState) return [];
-          return getCardsInPlay(currentState);
-        },
-        
-        getParticipantCards: () => {
-          const currentState = swadeStateRef.current;
-          if (!currentState) return [];
-          return getParticipantCards(currentState);
-        },
-        
-        gameStatus: () => {
-          const currentState = swadeStateRef.current;
-          if (!currentState) return null;
-          const summary = getGameStateSummary(currentState);
-          console.log('[GAME STATUS]', {
-            ...summary,
-            stateVersion: currentState.version,
-            expectedVersion: CURRENT_STATE_VERSION
-          });
-          return summary;
-        },
-
-        // Helper functions
-        reset: () => {
-          console.log('[SWADE] Resetting to initial state...');
-          const freshState = initializeEmptyState();
-          writeEncounterState(freshState);
-          console.log('[SWADE] Reset complete - fresh shuffled deck created');
-        }
-      };
-
-      // Expose to iframe window for console access
-      (window as any).swade = swadeConsole;
-      console.log('[SWADE] Assigned to iframe window.swade:', swadeConsole);
-      console.log('[SWADE] Verification - window.swade exists:', !!(window as any).swade);
-      
-      console.log('[SWADE] Console utilities available:');
-      console.log('  Basic deck operations:');
-      console.log('    window.swade.drawCard() - Draw a single card (not assigned)');
-      console.log('    window.swade.discardCard(cardId) - Discard a specific card');  
-      console.log('    window.swade.shuffleDeck() - Reshuffle the deck');
-      console.log('    window.swade.showDeck() - Display deck state');
-      console.log('    window.swade.testDraw(n) - Draw n cards for testing');
-      console.log('  Game simulation:');
-      console.log('    window.swade.createTestParticipant(name) - Add test participant');
-      console.log('    window.swade.dealTo(participantId) - Deal card to participant');
-      console.log('    window.swade.endRound() - End round (discard all participant cards)');
-      console.log('    window.swade.getCardsInPlay() - Show all cards drawn from deck (in play)');
-      console.log('    window.swade.getParticipantCards() - Show cards assigned to participants');
-      console.log('    window.swade.gameStatus() - Show round/phase/participant summary');
-      console.log('  Utilities:');
-      console.log('    window.swade.getState() - Get current SWADE state');
-      console.log('    window.swade.reset() - Reset to initial state');
-      console.log('[SWADE] Note: Make sure to select this iframe context in dev tools console dropdown');
-    }
-
-    return () => {
-      // Cleanup console utilities
-      if ((window as any).swade) {
-        delete (window as any).swade;
-      }
-    };
-  }, [!!swadeState]); // Only re-run when swadeState changes from null to non-null
 
   useEffect(() => {
     const handleItemsChange = async (items: Item[]) => {
@@ -460,7 +235,7 @@ export function InitiativeTracker() {
       <InitiativeHeader
         subtitle={
           swadeState ? (
-            `Round ${swadeState.round} | Phase: ${swadeState.phase} | Cards: ${swadeState.deck.remaining.length} remaining, ${swadeState.deck.discard.length} discarded`
+            `Round ${gameSummary.round} | Phase: ${gameSummary.phase} | Cards: ${deckCounts.remaining}R/${deckCounts.inPlay}P/${deckCounts.discard}D`
           ) : initiativeItems.length === 0 ? (
             "SWADE Initiative - Select a character to start initiative"
           ) : undefined
