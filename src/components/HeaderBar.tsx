@@ -2,8 +2,11 @@ import React from "react";
 import { 
   Divider, 
   Typography, 
-  Box 
+  Box,
+  IconButton 
 } from "@mui/material";
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import OBR from "@owlbear-rodeo/sdk";
 
 import { useAppSelector } from "../store/hooks";
 import { 
@@ -12,6 +15,7 @@ import {
   selectDeckCounts 
 } from "../store/selectors";
 import { Phase } from "../state/types";
+import { getPluginId } from "../getPluginId";
 
 function getRoundDisplay(round: number, phase: Phase): string {
   if (phase === 'setup') return "Not Started";
@@ -22,7 +26,11 @@ function formatDeckStatus(counts: { remaining: number; inPlay: number; discard: 
   return `Deck: ${counts.remaining}R • ${counts.inPlay}P • ${counts.discard}D`;
 }
 
-export function HeaderBar() {
+interface HeaderBarProps {
+  role?: "GM" | "PLAYER";
+}
+
+export function HeaderBar({ role }: HeaderBarProps) {
   const round = useAppSelector(selectRound);
   const phase = useAppSelector(selectPhase);
   const deckCounts = useAppSelector(selectDeckCounts);
@@ -30,20 +38,39 @@ export function HeaderBar() {
   const roundDisplay = getRoundDisplay(round, phase);
   const deckStatus = formatDeckStatus(deckCounts);
 
+  const handleAddParticipant = () => {
+    OBR.popover.open({
+      id: getPluginId("add-participant"),
+      url: "/add-participant",
+      width: 286,
+      height: 217
+    });
+  };
+
   return (
     <>
       <Box sx={{ px: 2, py: 1.5 }}>
-        <Typography 
-          variant="h6" 
-          sx={{ 
-            fontSize: "1.125rem",
-            fontWeight: "bold",
-            color: "text.primary",
-            mb: 0.5
-          }}
-        >
-          SWADE Initiative
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.5 }}>
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              fontSize: "1.125rem",
+              fontWeight: "bold",
+              color: "text.primary"
+            }}
+          >
+            SWADE Initiative
+          </Typography>
+          {role === "GM" && (
+            <IconButton
+              onClick={handleAddParticipant}
+              size="small"
+              sx={{ color: "primary.main" }}
+            >
+              <PersonAddIcon fontSize="small" />
+            </IconButton>
+          )}
+        </Box>
         <Box sx={{ display: "flex", gap: 2, alignItems: "baseline" }}>
           <Typography 
             variant="subtitle1" 

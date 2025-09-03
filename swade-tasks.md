@@ -79,31 +79,31 @@ Based on the implementation plan from `swade-design.md` with 20 incremental, tes
 
 ---
 
-## Phase 4 - Empty Participant List
+## Phase 4 - Empty Participant List ✅ COMPLETE
 **Goal**: Set up participant list container with empty state
 
-- [ ] Create `src/components/ParticipantList.tsx` wrapper component
-- [ ] Display "No participants added" empty state message
-- [ ] Set up scrollable container for future participant rows
-- [ ] Connect to scene metadata for participants data
-- [ ] Handle empty rows object gracefully
-- [ ] **Test**: Empty state displays correctly
+- [x] Create `src/components/ParticipantList.tsx` wrapper component
+- [x] Display "No participants added" empty state message
+- [x] Set up scrollable container for future participant rows
+- [x] Connect to scene metadata for participants data
+- [x] Handle empty rows object gracefully
+- [x] **Test**: Empty state displays correctly
 
 **Design Reference**: Section 6.2 (Participant List)
 **Key Files**: `src/components/ParticipantList.tsx`
 
 ---
 
-## Phase 5 - Add Participants (Basic)
+## Phase 5 - Add Participants (Basic) ✅ COMPLETE
 **Goal**: Allow GM to add participants with name and type
 
-- [ ] Add "Add Participant" button to HeaderBar (GM only)
-- [ ] Create simple dialog with Name and Type fields (PC/NPC/GROUP)
-- [ ] Generate unique row IDs for new participants
-- [ ] Add participant to `rows` object in scene metadata
-- [ ] Display participant name in list (no cards yet)
-- [ ] Check `OBR.player.getRole()` for GM-only access
-- [ ] **Test**: Can add participants, they appear in list and persist
+- [x] Add "Add Participant" button to HeaderBar (GM only)
+- [x] Create simple dialog with Name and Type fields (PC/NPC/GROUP)
+- [x] Generate unique row IDs for new participants
+- [x] Add participant to `rows` object in scene metadata
+- [x] Display participant name in list (no cards yet)
+- [x] Check `OBR.player.getRole()` for GM-only access
+- [x] **Test**: Can add participants, they appear in list and persist
 
 **Design Reference**: Section 6.3 (Add Participant)
 **Key Files**: `src/components/HeaderBar.tsx`, participant dialog component

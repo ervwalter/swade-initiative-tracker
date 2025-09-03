@@ -6,24 +6,36 @@ import { CardHeader, Divider } from "@mui/material";
 import { InitiativeTracker } from "./InitiativeTracker";
 import { store } from "./store/store";
 import { subscribeToOBRChanges } from "./store/obrSync";
+import { AddParticipantModal } from "./components/AddParticipantModal";
 
 export function App() {
   const [sceneReady, setSceneReady] = useState(false);
+  const pathname = window.location.pathname;
   
   useEffect(() => {
     OBR.scene.isReady().then(setSceneReady);
     return OBR.scene.onReadyChange(setSceneReady);
   }, []);
 
-  // Set up OBR sync when app mounts
+  // Set up OBR sync when app mounts (for main UI only, modals handle their own state)
   useEffect(() => {
-    if (sceneReady) {
+    if (sceneReady && pathname === '/') {
       console.log('[RTK] Setting up OBR sync subscription...');
       const unsubscribe = subscribeToOBRChanges(store);
       return unsubscribe;
     }
-  }, [sceneReady]);
+  }, [sceneReady, pathname]);
 
+  // Route: Add Participant Modal
+  if (pathname === '/add-participant') {
+    return (
+      <Provider store={store}>
+        <AddParticipantModal />
+      </Provider>
+    );
+  }
+
+  // Route: Main Initiative Tracker
   if (sceneReady) {
     return (
       <Provider store={store}>
