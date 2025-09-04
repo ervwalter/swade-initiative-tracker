@@ -14,7 +14,7 @@ import {
   selectPhase, 
   selectDeckCounts 
 } from "../store/selectors";
-import { Phase } from "../state/types";
+import { Phase } from "../store/types";
 import { getPluginId } from "../getPluginId";
 
 function getRoundDisplay(round: number, phase: Phase): string {

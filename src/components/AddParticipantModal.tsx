@@ -13,14 +13,17 @@ import {
 import OBR from "@owlbear-rodeo/sdk";
 
 import { getPluginId } from "../getPluginId";
-import { readEncounterState, writeEncounterState } from "../state/sceneState";
-import { ParticipantType } from "../state/types";
+import { ParticipantType } from "../store/types";
+import { store } from "../store/store";
+import { createParticipant } from "../store/swadeSlice";
 
 export function AddParticipantModal() {
   const [name, setName] = useState("");
   const [type, setType] = useState<ParticipantType>("PC");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Store auto-initializes with OBR state - no manual setup needed
 
   // Resize popover to fit content
   useEffect(() => {
@@ -39,38 +42,13 @@ export function AddParticipantModal() {
     setIsSubmitting(true);
     
     try {
-      // Read current state
-      const currentState = await readEncounterState();
-      if (!currentState) {
-        console.error('[Modal] Could not read current state');
-        return;
-      }
-
-      // Generate unique ID
-      const id = `p-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+      // Dispatch Redux action instead of direct OBR write
+      store.dispatch(createParticipant({
+        name: name.trim(),
+        type,
+        tokenIds: []
+      }));
       
-      // Add participant to state
-      const updatedState = {
-        ...currentState,
-        rows: {
-          ...currentState.rows,
-          [id]: {
-            id,
-            name: name.trim(),
-            tokenIds: [],
-            type,
-            inactive: false,
-            onHold: false,
-            currentCardId: undefined,
-            candidateIds: [],
-            drewThisRound: false,
-            revealed: type === 'PC' // PCs always visible, NPCs/Groups hidden initially
-          }
-        }
-      };
-
-      // Write updated state back
-      await writeEncounterState(updatedState);
       console.log(`[Modal] Added participant: ${name} (${type})`);
       
       // Close modal

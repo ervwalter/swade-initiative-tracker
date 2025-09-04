@@ -1,6 +1,6 @@
 // SWADE Initiative Tracker - Game State Management
 
-import { EncounterState, CardId, ParticipantRow } from "../state/types";
+import { EncounterState, CardId, ParticipantRow } from "../store/types";
 import { discardAllInPlay, drawCard, reshuffleDeck } from "./deck";
 
 /**

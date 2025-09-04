@@ -1,7 +1,7 @@
 // RTK Selectors for SWADE state
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from './store';
-import { CardId, ParticipantRow, Card } from '../state/types';
+import { CardId, ParticipantRow, Card } from './types';
 
 // Base selectors
 export const selectSwadeState = (state: RootState) => state.swade;

@@ -62,6 +62,7 @@ export interface EncounterState {
     actNow?: ActNowInsertion[]; 
   };
   settings: Settings;
+  revision: number;           // Increments with each state change, for sync loop detection
 }
 
 // Local component state (NOT synced in metadata)

@@ -1,9 +1,16 @@
 // SWADE Redux Slice
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { EncounterState, CardId } from '../state/types';
-import { initializeEmptyState } from '../state/sceneState';
+import { EncounterState, CardId } from './types';
+import { initializeEmptyState } from './roomState';
 
 const initialState: EncounterState = initializeEmptyState();
+
+// Helper to increment revision on state changes (for sync loop detection)
+const incrementRevision = (state: EncounterState) => {
+  const oldRevision = state.revision ?? 0;
+  state.revision = oldRevision + 1;
+  console.log('[REVISION] Incremented from', oldRevision, 'to', state.revision);
+};
 
 export const swadeSlice = createSlice({
   name: 'swade',
@@ -31,6 +38,7 @@ export const swadeSlice = createSlice({
         console.log(`[SWADE] Added candidate ${cardId} to ${participant.name}`,
           `(${participant.candidateIds.length} candidates)`);
       }
+      incrementRevision(state);
     },
 
     selectKeeperCard: (state, action: PayloadAction<{participantId: string, cardId: string}>) => {
@@ -58,6 +66,7 @@ export const swadeSlice = createSlice({
       participant.candidateIds = [cardId]; // Keep only the selected card
       
       console.log(`[SWADE] ${participant.name} kept ${cardId}`);
+      incrementRevision(state);
     },
 
     clearParticipantCard: (state, action: PayloadAction<string>) => {
@@ -79,6 +88,7 @@ export const swadeSlice = createSlice({
       participant.drewThisRound = false;
       
       console.log(`[SWADE] Cleared cards for ${participant.name}`);
+      incrementRevision(state);
     },
 
     // Legacy drawCard for simple deck testing
@@ -91,6 +101,7 @@ export const swadeSlice = createSlice({
       } else {
         console.log('[SWADE] No cards remaining to draw');
       }
+      incrementRevision(state);
     },
 
     discardCard: (state, action: PayloadAction<CardId>) => {
@@ -104,6 +115,7 @@ export const swadeSlice = createSlice({
       } else {
         console.log('[SWADE] Card not found in play:', cardId);
       }
+      incrementRevision(state);
     },
 
     shuffleDeck: (state) => {
@@ -124,6 +136,7 @@ export const swadeSlice = createSlice({
       state.deck.reshuffleAfterRound = false;
       
       console.log('[SWADE] Deck shuffled:', remaining.length, 'cards');
+      incrementRevision(state);
     },
 
     // Deal round - draws one card per eligible participant
@@ -163,6 +176,7 @@ export const swadeSlice = createSlice({
       state.round = wasSetup ? 1 : state.round + 1;
       state.phase = 'in_round';
       console.log(`[SWADE] ${wasSetup ? 'Started' : 'Advanced to'} Round ${state.round}`);
+      incrementRevision(state);
     },
 
     // Game state operations
@@ -208,6 +222,7 @@ export const swadeSlice = createSlice({
       
       console.log(`[SWADE] Round ${previousRound} ended → Round ${state.round}`,
         `(${cardsDiscarded} cards discarded)`);
+      incrementRevision(state);
     },
 
     // Participant management
@@ -251,6 +266,7 @@ export const swadeSlice = createSlice({
       }
       
       console.log(`[SWADE] Created participant: ${name} (${type}) - ID: ${id}`);
+      incrementRevision(state);
     },
 
     removeParticipant: (state, action: PayloadAction<string>) => {
@@ -283,6 +299,7 @@ export const swadeSlice = createSlice({
       }
       
       console.log(`[SWADE] Removed participant: ${participant.name}`);
+      incrementRevision(state);
     },
 
     // Status setters (explicit, not toggles)
@@ -293,6 +310,7 @@ export const swadeSlice = createSlice({
       
       participant.onHold = value;
       console.log(`[SWADE] ${participant.name} hold: ${value}`);
+      incrementRevision(state);
     },
 
     setInactive: (state, action: PayloadAction<{id: string, value: boolean}>) => {
@@ -302,6 +320,7 @@ export const swadeSlice = createSlice({
       
       participant.inactive = value;
       console.log(`[SWADE] ${participant.name} inactive: ${value}`);
+      incrementRevision(state);
     },
 
     setRevealed: (state, action: PayloadAction<{id: string, value: boolean}>) => {
@@ -311,6 +330,7 @@ export const swadeSlice = createSlice({
       
       participant.revealed = value;
       console.log(`[SWADE] ${participant.name} revealed: ${value}`);
+      incrementRevision(state);
     },
 
     // Turn management
@@ -328,6 +348,7 @@ export const swadeSlice = createSlice({
       }
       
       console.log(`[SWADE] Active participant: ${id ? state.rows[id]?.name : 'none'}`);
+      incrementRevision(state);
     },
 
     // Act Now
@@ -348,12 +369,14 @@ export const swadeSlice = createSlice({
       participant.revealed = true;
       
       console.log(`[SWADE] ${participant.name} acting now (${placement})`);
+      incrementRevision(state);
     },
 
     // Settings
     setPrivacy: (state, action: PayloadAction<boolean>) => {
       state.settings.hideNpcFromPlayers = action.payload;
       console.log(`[SWADE] Privacy: ${action.payload ? 'enabled' : 'disabled'}`);
+      incrementRevision(state);
     },
 
     // System operations
@@ -363,9 +386,11 @@ export const swadeSlice = createSlice({
     },
 
     setEncounterState: (state, action: PayloadAction<EncounterState>) => {
-      console.log('[SWADE] State synced from OBR metadata');
+      console.log('[SWADE] State synced from OBR room metadata');
       return action.payload;
-    }
+    },
+
+    // Note: Revision increments are now handled within each state-changing reducer
   }
 });
 

@@ -1,6 +1,6 @@
 // SWADE Initiative Tracker - Deck Operations
 
-import { Card, CardId, Deck } from "../state/types";
+import { Card, CardId, Deck } from "../store/types";
 
 /**
  * Fisher-Yates shuffle algorithm for randomizing card order

@@ -1,4 +1,4 @@
-// Scene metadata synchronization for SWADE Initiative Tracker
+// Room metadata synchronization for SWADE Initiative Tracker
 
 import OBR from "@owlbear-rodeo/sdk";
 import { getPluginId } from "../getPluginId";
@@ -33,14 +33,15 @@ export function initializeEmptyState(): EncounterState {
     },
     settings: {
       hideNpcFromPlayers: false
-    }
+    },
+    revision: 0
   };
 }
 
-// Read encounter state from scene metadata
+// Read encounter state from room metadata
 export async function readEncounterState(): Promise<EncounterState | null> {
   try {
-    const metadata = await OBR.scene.getMetadata();
+    const metadata = await OBR.room.getMetadata();
     const stateData = metadata[PLUGIN_STATE_KEY];
     
     if (!stateData || typeof stateData !== 'object') {
@@ -50,7 +51,10 @@ export async function readEncounterState(): Promise<EncounterState | null> {
     // Validate basic structure
     if (isValidStateStructure(stateData)) {
       // Apply any necessary migrations
-      return migrateState(stateData);
+      const migratedState = migrateState(stateData);
+      console.log('[OBR] Raw state revision:', (stateData as EncounterState).revision ?? 'undefined');
+      console.log('[OBR] Migrated state revision:', migratedState.revision);
+      return migratedState;
     }
 
     return null;
@@ -60,10 +64,10 @@ export async function readEncounterState(): Promise<EncounterState | null> {
   }
 }
 
-// Write encounter state to scene metadata
+// Write encounter state to room metadata
 export async function writeEncounterState(state: EncounterState): Promise<void> {
   try {
-    await OBR.scene.setMetadata({
+    await OBR.room.setMetadata({
       [PLUGIN_STATE_KEY]: state
     });
   } catch (error) {
@@ -97,7 +101,7 @@ export function subscribeToEncounterState(
     }
   };
 
-  return OBR.scene.onMetadataChange(handleMetadataChange);
+  return OBR.room.onMetadataChange(handleMetadataChange);
 }
 
 // Initialize state if it doesn't exist, otherwise return existing state
@@ -105,8 +109,11 @@ export async function getOrInitializeState(): Promise<EncounterState> {
   let state = await readEncounterState();
   
   if (!state) {
+    console.log('[OBR] No existing state found, creating new state');
     state = initializeEmptyState();
     await writeEncounterState(state);
+  } else {
+    console.log('[OBR] Found existing state with revision:', state.revision);
   }
 
   return state;

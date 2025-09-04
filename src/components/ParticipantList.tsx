@@ -2,16 +2,19 @@ import React from "react";
 import { 
   Box, 
   List, 
-  ListItem,
-  ListItemText,
   Typography
 } from "@mui/material";
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 
 import { useAppSelector } from "../store/hooks";
 import { selectParticipants } from "../store/selectors";
+import { ParticipantRow } from "./ParticipantRow";
 
-export function ParticipantList() {
+interface ParticipantListProps {
+  role?: "GM" | "PLAYER";
+}
+
+export function ParticipantList({ role }: ParticipantListProps) {
   const participants = useAppSelector(selectParticipants);
 
   if (participants.length === 0) {
@@ -56,9 +59,11 @@ export function ParticipantList() {
   return (
     <List>
       {participants.map((participant) => (
-        <ListItem key={participant.id}>
-          <ListItemText primary={participant.name} />
-        </ListItem>
+        <ParticipantRow 
+          key={participant.id}
+          participant={participant}
+          role={role}
+        />
       ))}
     </List>
   );

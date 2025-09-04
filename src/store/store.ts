@@ -1,15 +1,10 @@
 // RTK Store Configuration
-import { configureStore, createListenerMiddleware } from '@reduxjs/toolkit';
+import { configureStore } from '@reduxjs/toolkit';
 import { swadeSlice } from './swadeSlice';
 import { setupOBRSync } from './obrSync';
+import { subscribeToOBRChanges } from './obrSync';
 
-// Create listener middleware instance
-const listenerMiddleware = createListenerMiddleware();
-
-// Set up OBR sync listeners
-setupOBRSync(listenerMiddleware);
-
-// Configure store
+// Configure store (revision increments handled within each reducer)
 export const store = configureStore({
   reducer: {
     swade: swadeSlice.reducer
@@ -20,8 +15,33 @@ export const store = configureStore({
         // Ignore these action types for serializability checks
         ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
       }
-    }).prepend(listenerMiddleware.middleware)
+    })
 });
+
+// Set up OBR sync using state subscription (cleanup handled in App.tsx)
+export const cleanupOBRSync = setupOBRSync(store);
+
+// Lazy initialization - call this after OBR is ready
+let storeInitialized = false;
+let cleanupSubscription: (() => void) | null = null;
+
+export function initializeStoreIfNeeded() {
+  if (storeInitialized) {
+    return;
+  }
+  
+  console.log('[Store] Initializing with OBR state...');
+  cleanupSubscription = subscribeToOBRChanges(store);
+  storeInitialized = true;
+}
+
+export function cleanupStoreSubscriptions() {
+  if (cleanupSubscription) {
+    cleanupSubscription();
+    cleanupSubscription = null;
+    storeInitialized = false;
+  }
+}
 
 // Infer types from store
 export type RootState = ReturnType<typeof store.getState>;

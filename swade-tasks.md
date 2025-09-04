@@ -67,12 +67,12 @@ Based on the implementation plan from `swade-design.md` with 20 incremental, tes
 ## Phase 3 - Basic Header UI
 **Goal**: Render header with round information (no buttons yet)
 
-- [ ] Create `src/components/HeaderBar.tsx` component
-- [ ] Display "SWADE Initiative" title
-- [ ] Show current round indicator ("Setup", "Round 1", "Round 3", etc.)
-- [ ] Connect to scene metadata state for round display
-- [ ] Style with MUI components for consistency
-- [ ] **Test**: Header renders correctly, shows current round state
+- [x] Create `src/components/HeaderBar.tsx` component
+- [x] Display "SWADE Initiative" title
+- [x] Show current round indicator ("Setup", "Round 1", "Round 3", etc.)
+- [x] Connect to scene metadata state for round display
+- [x] Style with MUI components for consistency
+- [x] **Test**: Header renders correctly, shows current round state
 
 **Design Reference**: Section 6.1 (Header Bar)
 **Key Files**: `src/components/HeaderBar.tsx`
@@ -113,12 +113,12 @@ Based on the implementation plan from `swade-design.md` with 20 incremental, tes
 ## Phase 6 - Remove Participants
 **Goal**: Allow GM to remove participants from initiative
 
-- [ ] Create `src/components/ParticipantRow.tsx` for individual row display
-- [ ] Add Remove button per row (GM only, visible only)
-- [ ] Implement participant deletion from `rows` object
-- [ ] Update scene metadata when participant removed
-- [ ] Handle edge case of removing non-existent participant
-- [ ] **Test**: Can remove participants, state updates correctly
+- [x] Create `src/components/ParticipantRow.tsx` for individual row display
+- [x] Add Remove button per row (GM only, visible only)
+- [x] Implement participant deletion from `rows` object
+- [x] Update scene metadata when participant removed
+- [x] Handle edge case of removing non-existent participant
+- [x] **Test**: Can remove participants, state updates correctly
 
 **Design Reference**: Section 8 (Error Handling - Removing participants)
 **Key Files**: `src/components/ParticipantRow.tsx`

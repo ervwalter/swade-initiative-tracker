@@ -1,6 +1,6 @@
 // SWADE Initiative Tracker - Card ID Utilities
 
-import { CardId, Suit, Rank, Card } from "../state/types";
+import { CardId, Suit, Rank, Card } from "../store/types";
 
 /**
  * Generate deterministic card ID from rank and suit

@@ -8,29 +8,9 @@ import OBR, { isImage, Item, Player } from "@owlbear-rodeo/sdk";
 import { getPluginId } from "./getPluginId";
 import { HeaderBar } from "./components/HeaderBar";
 import { ParticipantList } from "./components/ParticipantList";
-import { isPlainObject } from "./isPlainObject";
-
-// Redux imports
-import { useAppDispatch } from "./store/hooks";
-import { setEncounterState } from "./store/swadeSlice";
-import { getOrInitializeState } from "./state/sceneState";
-
-/** Check that the item metadata is in the correct format */
-function isMetadata(
-  metadata: unknown
-): metadata is { count: string; active: boolean } {
-  return (
-    isPlainObject(metadata) &&
-    typeof metadata.count === "string" &&
-    typeof metadata.active === "boolean"
-  );
-}
 
 export function InitiativeTracker() {
   const [role, setRole] = useState<"GM" | "PLAYER">("PLAYER");
-  
-  // Redux state management
-  const dispatch = useAppDispatch();
 
   useEffect(() => {
     const handlePlayerChange = (player: Player) => {
@@ -40,30 +20,8 @@ export function InitiativeTracker() {
     return OBR.player.onChange(handlePlayerChange);
   }, []);
 
-  // Initialize SWADE state in Redux store
-  useEffect(() => {
-    let isActive = true;
-
-    console.log('[RTK] Initializing SWADE state...');
-    
-    getOrInitializeState().then(state => {
-      if (isActive) {
-        console.log('[RTK] Initial state loaded, dispatching to store:', {
-          round: state.round,
-          phase: state.phase,
-          participantCount: Object.keys(state.rows).length,
-          deckRemaining: state.deck.remaining.length
-        });
-        dispatch(setEncounterState(state));
-      }
-    }).catch(error => {
-      console.error('[RTK] Failed to initialize state:', error);
-    });
-
-    return () => {
-      isActive = false;
-    };
-  }, [dispatch]);
+  // State initialization is now handled by the OBR sync system automatically
+  // No need for manual initialization here - the sync system will load and initialize state
 
   // Dynamic height management
   const containerRef = useRef<HTMLDivElement>(null);
@@ -142,7 +100,7 @@ export function InitiativeTracker() {
   return (
     <Stack ref={containerRef}>
       <HeaderBar role={role} />
-      <ParticipantList />
+      <ParticipantList role={role} />
     </Stack>
   );
 }

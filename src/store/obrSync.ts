@@ -1,19 +1,11 @@
-// OBR Metadata Synchronization for RTK Store
-import { createListenerMiddleware, isAnyOf, type ListenerMiddlewareInstance } from '@reduxjs/toolkit';
+// OBR Room Metadata Synchronization for RTK Store
+import type { Store, Unsubscribe } from '@reduxjs/toolkit';
 import OBR from '@owlbear-rodeo/sdk';
-import { writeEncounterState } from '../state/sceneState';
+import { writeEncounterState, readEncounterState, getOrInitializeState } from './roomState';
 import { getPluginId } from '../getPluginId';
-import { isValidStateStructure, migrateState } from '../state/migrations';
-import { 
-  drawCard, 
-  discardCard, 
-  shuffleDeck, 
-  endRound, 
-  createParticipant, 
-  dealRound,
-  reset,
-  setEncounterState 
-} from './swadeSlice';
+import { isValidStateStructure, migrateState } from './migrations';
+import { setEncounterState } from './swadeSlice';
+import type { EncounterState } from './types';
 import type { RootState } from './store';
 
 // Debounce utility
@@ -28,57 +20,86 @@ function debounce<T extends (...args: any[]) => any>(
   };
 }
 
-// Setup OBR synchronization
-export function setupOBRSync(listenerMiddleware: ListenerMiddlewareInstance) {
+// Module-level tracking of last synced revision
+let lastSyncedRevision = 0;
+
+// Setup OBR synchronization using state subscription
+export function setupOBRSync(store: Store<RootState>): Unsubscribe {
+  let previousState = store.getState().swade;
+
   // Create debounced sync function
-  const debouncedSync = debounce(async (state: RootState['swade']) => {
+  const debouncedSync = debounce(async (state: EncounterState) => {
     try {
+      // Treat null/undefined as 0 for backwards compatibility
+      const revision = state.revision ?? 0;
+      
+      // Check if OBR room metadata already has this revision (avoid redundant writes)
+      const currentOBRState = await readEncounterState();
+      const currentOBRRevision = currentOBRState?.revision ?? 0;
+      
+      if (currentOBRRevision >= revision) {
+        console.log('[OBR] Skipping sync - OBR has newer/same revision:', currentOBRRevision, 'vs', revision);
+        return;
+      }
+      
+      lastSyncedRevision = revision;
       await writeEncounterState(state);
-      console.log('[OBR] Synced to metadata:', {
+      console.log('[OBR] Synced to room metadata:', {
         round: state.round,
         phase: state.phase,
         participants: Object.keys(state.rows).length,
-        deckRemaining: state.deck.remaining.length
+        deckRemaining: state.deck.remaining.length,
+        revision: revision
       });
     } catch (error) {
-      console.error('[OBR] Failed to sync to metadata:', error);
-      // TODO: Consider showing user notification for sync failures
-      // For now, we'll rely on the next successful action to resync
+      console.error('[OBR] Failed to sync to room metadata:', error);
     }
   }, 50);
 
-  // Listen for actions that should trigger OBR sync
-  listenerMiddleware.startListening({
-    matcher: isAnyOf(
-      drawCard,
-      discardCard,
-      shuffleDeck,
-      endRound,
-      createParticipant,
-      dealRound,
-      reset
-      // Note: setEncounterState is NOT included - it comes FROM OBR
-    ),
-    effect: (action: any, listenerApi: any) => {
-      const state = listenerApi.getState().swade;
-      debouncedSync(state);
+  // Subscribe to state changes
+  const unsubscribe = store.subscribe(() => {
+    const currentState = store.getState().swade;
+    
+    // Skip if state reference hasn't changed (Redux immutability)  
+    if (currentState === previousState) {
+      return;
     }
+
+    // Sync the new state
+    debouncedSync(currentState);
+    previousState = currentState;
   });
 
-  console.log('[OBR] Sync listeners configured');
+  console.log('[OBR] State subscription sync configured');
+  return unsubscribe;
 }
 
 // Subscribe to external OBR changes (call once during app initialization)
-export function subscribeToOBRChanges(store: { dispatch: (action: any) => void }) {
+export function subscribeToOBRChanges(store: Store<RootState>): () => void {
   const PLUGIN_STATE_KEY = getPluginId('state');
   
-  console.log('[OBR] Setting up metadata change subscription...');
+  console.log('[OBR] Setting up room metadata change subscription...');
   
-  const unsubscribe = OBR.scene.onMetadataChange((metadata) => {
+  // Load initial state
+  getOrInitializeState().then(state => {
+    console.log('[OBR] Initial state loaded:', {
+      round: state.round,
+      phase: state.phase,
+      participantCount: Object.keys(state.rows).length,
+      deckRemaining: state.deck.remaining.length,
+      revision: state.revision
+    });
+    store.dispatch(setEncounterState(state));
+  }).catch(error => {
+    console.error('[OBR] Failed to initialize state:', error);
+  });
+  
+  
+  const unsubscribe = OBR.room.onMetadataChange((metadata) => {
     const stateData = metadata[PLUGIN_STATE_KEY];
     
     if (!stateData) {
-      console.log('[OBR] No state data in metadata');
+      console.log('[OBR] No state data in room metadata');
       return;
     }
 
@@ -90,17 +111,30 @@ export function subscribeToOBRChanges(store: { dispatch: (action: any) => void }
     ) {
       try {
         const migratedState = migrateState(stateData);
+        
+        // Skip if this is our own write bouncing back or older data
+        // Treat null/undefined as 0 for backwards compatibility
+        const incomingRevision = migratedState.revision ?? 0;
+        const currentRevision = store.getState().swade.revision ?? 0;
+        
+        if (incomingRevision <= currentRevision) {
+          console.log('[OBR] Ignoring stale/duplicate update (incoming:', incomingRevision, 'current:', currentRevision, ')');
+          return;
+        }
+        
+        // Process the external update
         store.dispatch(setEncounterState(migratedState));
         console.log('[OBR] External state update received and applied');
+        
       } catch (error) {
         console.error('[OBR] Failed to process external state update:', error);
         // Continue using current state - don't break the app
       }
     } else {
-      console.warn('[OBR] Invalid state structure in metadata, ignoring update');
+      console.warn('[OBR] Invalid state structure in room metadata, ignoring update');
     }
   });
 
-  console.log('[OBR] Metadata change subscription active');
+  console.log('[OBR] Room metadata change subscription active');
   return unsubscribe;
 }

@@ -57,6 +57,12 @@ export function migrateState(rawState: RawStateData): EncounterState {
   // Ensure version is set correctly
   currentState.version = CURRENT_STATE_VERSION;
   
+  // Ensure revision exists (for states created before revision support)
+  if (typeof currentState.revision !== 'number') {
+    currentState.revision = 0;
+    console.log('[MIGRATION] Added missing revision field');
+  }
+  
   if (startVersion < CURRENT_STATE_VERSION) {
     console.log(`[MIGRATION] Successfully upgraded state from v${startVersion} to v${CURRENT_STATE_VERSION}`);
   }
