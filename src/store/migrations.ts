@@ -3,7 +3,7 @@
 import { EncounterState } from "./types";
 
 // Define the current schema version
-export const CURRENT_STATE_VERSION = 2;
+export const CURRENT_STATE_VERSION = 3;
 
 // Type for raw state data (could be any version)
 type RawStateData = Record<string, any>;
@@ -23,10 +23,21 @@ const MIGRATIONS: Record<number, MigrationFunction> = {
     
     state.version = 2;
     return state;
+  },
+  
+  // Migration from version 2 to 3: Remove cards lookup from state (now static)
+  3: (state: RawStateData): RawStateData => {
+    console.log('[MIGRATION] Upgrading state from v2 to v3: Removing cards lookup from state');
+    
+    if (state.cards) {
+      delete state.cards;
+    }
+    
+    state.version = 3;
+    return state;
   }
   
   // Future migrations go here:
-  // 3: (state) => { /* migration logic */ state.version = 3; return state; },
   // 4: (state) => { /* migration logic */ state.version = 4; return state; }
 };
 
@@ -80,7 +91,6 @@ export function isValidStateStructure(rawState: RawStateData): boolean {
     'round' in rawState &&
     'phase' in rawState &&
     'deck' in rawState &&
-    'cards' in rawState &&
     'rows' in rawState
   );
 }

@@ -59,7 +59,7 @@ export function HeaderBar({ role }: HeaderBarProps) {
               color: "text.primary"
             }}
           >
-            SWADE Initiative
+            Initiative Tracker
           </Typography>
           {role === "GM" && (
             <IconButton

@@ -4,7 +4,7 @@ import ThemeProvider from "@mui/material/styles/ThemeProvider";
 
 import { App } from "./App";
 import "./index.css";
-import { PluginGate } from "./PluginGate";
+import { PluginGate } from "./components/PluginGate";
 import { PluginThemeProvider } from "./PluginThemeProvider";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(

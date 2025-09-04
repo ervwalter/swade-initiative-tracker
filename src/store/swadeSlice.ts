@@ -2,6 +2,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { EncounterState, CardId } from './types';
 import { initializeEmptyState } from './roomState';
+import { RED_JOKER_ID, BLACK_JOKER_ID } from '../deck/cardIds';
 
 const initialState: EncounterState = initializeEmptyState();
 
@@ -31,7 +32,7 @@ export const swadeSlice = createSlice({
         participant.candidateIds.push(cardId);
         
         // Check for joker
-        if (cardId === 'JK-R' || cardId === 'JK-B') {
+        if (cardId === RED_JOKER_ID || cardId === BLACK_JOKER_ID) {
           state.deck.reshuffleAfterRound = true;
         }
         
@@ -141,6 +142,21 @@ export const swadeSlice = createSlice({
 
     // Deal round - draws one card per eligible participant
     dealRound: (state) => {
+      // Count eligible participants
+      const eligibleParticipants = Object.values(state.rows).filter(row => 
+        !row.inactive && !row.onHold
+      );
+      
+      // Check if we have enough cards
+      if (state.deck.remaining.length < eligibleParticipants.length) {
+        console.error('[SWADE] Not enough cards remaining for all eligible participants', {
+          remaining: state.deck.remaining.length,
+          needed: eligibleParticipants.length
+        });
+        // Don't start the round if we can't deal to everyone
+        return;
+      }
+      
       // Clear previous round data
       Object.values(state.rows).forEach(row => {
         row.candidateIds = [];
@@ -151,31 +167,39 @@ export const swadeSlice = createSlice({
         }
       });
       
+      let cardsDealt = 0;
+      
       // Deal to eligible participants
-      Object.values(state.rows).forEach(row => {
-        if (!row.inactive && !row.onHold && state.deck.remaining.length > 0) {
-          const cardId = state.deck.remaining.pop();
-          if (cardId) {
-            state.deck.inPlay.push(cardId);
-            row.currentCardId = cardId;
-            row.candidateIds = [cardId];
-            row.drewThisRound = true;
-            
-            // Check for Jokers
-            if (cardId === 'JK-R' || cardId === 'JK-B') {
-              state.deck.reshuffleAfterRound = true;
-            }
-            
-            console.log(`[SWADE] Dealt ${cardId} to ${row.name}`);
+      eligibleParticipants.forEach(row => {
+        const cardId = state.deck.remaining.pop();
+        if (cardId) {
+          state.deck.inPlay.push(cardId);
+          row.currentCardId = cardId;
+          row.candidateIds = [cardId];
+          row.drewThisRound = true;
+          cardsDealt++;
+          
+          // Check for Jokers
+          if (cardId === RED_JOKER_ID || cardId === BLACK_JOKER_ID) {
+            state.deck.reshuffleAfterRound = true;
           }
+          
+          console.log(`[SWADE] Dealt ${cardId} to ${row.name}`);
+        } else {
+          console.error(`[SWADE] Failed to deal card to ${row.name} - no cards remaining`);
         }
       });
       
-      // Update round and phase
-      const wasSetup = state.round === 0;
-      state.round = wasSetup ? 1 : state.round + 1;
-      state.phase = 'in_round';
-      console.log(`[SWADE] ${wasSetup ? 'Started' : 'Advanced to'} Round ${state.round}`);
+      // Only advance round if we successfully dealt cards
+      if (cardsDealt > 0) {
+        const wasSetup = state.round === 0;
+        state.round = wasSetup ? 1 : state.round + 1;
+        state.phase = 'in_round';
+        console.log(`[SWADE] ${wasSetup ? 'Started' : 'Advanced to'} Round ${state.round} (dealt ${cardsDealt} cards)`);
+      } else {
+        console.error('[SWADE] Deal round failed - no cards were dealt');
+      }
+      
       incrementRevision(state);
     },
 
@@ -216,11 +240,9 @@ export const swadeSlice = createSlice({
       }
       
       // Update game state
-      const previousRound = state.round;
-      state.round += 1;
       state.phase = 'between_rounds';
       
-      console.log(`[SWADE] Round ${previousRound} ended → Round ${state.round}`,
+      console.log(`[SWADE] Round ${state.round} ended`,
         `(${cardsDiscarded} cards discarded)`);
       incrementRevision(state);
     },
@@ -257,7 +279,7 @@ export const swadeSlice = createSlice({
           state.rows[id].candidateIds = [cardId];
           state.rows[id].drewThisRound = true;
           
-          if (cardId === 'JK-R' || cardId === 'JK-B') {
+          if (cardId === RED_JOKER_ID || cardId === BLACK_JOKER_ID) {
             state.deck.reshuffleAfterRound = true;
           }
           

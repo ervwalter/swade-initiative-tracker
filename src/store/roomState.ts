@@ -3,7 +3,7 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { getPluginId } from "../getPluginId";
 import { EncounterState, ParticipantRow, Card, CardId } from "./types";
-import { generateAllCardIds, buildCardsLookup } from "../deck/cardIds";
+import { generateAllCardIds } from "../deck/cardIds";
 import { createShuffledDeck } from "../deck/deck";
 import { migrateState, isValidStateStructure, CURRENT_STATE_VERSION } from "./migrations";
 
@@ -26,7 +26,6 @@ export function initializeEmptyState(): EncounterState {
       discard: shuffledDeck.discard,
       reshuffleAfterRound: false
     },
-    cards: buildCardsLookup(),
     rows: {},
     turn: {
       activeRowId: null

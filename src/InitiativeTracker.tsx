@@ -8,6 +8,7 @@ import OBR, { isImage, Item, Player } from "@owlbear-rodeo/sdk";
 import { getPluginId } from "./getPluginId";
 import { HeaderBar } from "./components/HeaderBar";
 import { ParticipantList } from "./components/ParticipantList";
+import { ControlBar } from "./components/ControlBar";
 
 export function InitiativeTracker() {
   const [role, setRole] = useState<"GM" | "PLAYER">("PLAYER");
@@ -98,9 +99,10 @@ export function InitiativeTracker() {
 
 
   return (
-    <Stack ref={containerRef}>
+    <Stack ref={containerRef} sx={{ pb: 8 }}>
       <HeaderBar role={role} />
       <ParticipantList role={role} />
+      <ControlBar role={role} />
     </Stack>
   );
 }

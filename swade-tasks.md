@@ -125,52 +125,55 @@ Based on the implementation plan from `swade-design.md` with 20 incremental, tes
 
 ---
 
-## Phase 7 - Deal Round
+## Phase 7 - Deal Round ✅ COMPLETE
 **Goal**: Deal cards to eligible participants
 
-- [ ] Add "Deal Round" button to HeaderBar (changes to "Start & Deal Round" when round=0)
-- [ ] Implement deal round logic: one card per eligible participant
-- [ ] Skip participants marked as `inactive` or `onHold`
-- [ ] Update round counter and set phase to 'in_round'
-- [ ] Set `currentCardId` for each participant who draws
-- [ ] Display dealt cards in participant rows
-- [ ] **Test**: Cards dealt correctly, displayed in rows
+- [x] Add "Deal Round" button to ControlBar (changes to "Start" when round=0)
+- [x] Implement deal round logic: one card per eligible participant
+- [x] Skip participants marked as `inactive` or `onHold`
+- [x] Update round counter and set phase to 'in_round'
+- [x] Set `currentCardId` for each participant who draws
+- [x] Display dealt cards in participant rows
+- [x] Add error handling for insufficient cards
+- [x] **Test**: Cards dealt correctly, displayed in rows
 
 **Design Reference**: Section 4.6 (Deal Round)
-**Key Files**: `src/components/HeaderBar.tsx`, deal round logic
+**Key Files**: `src/components/ControlBar.tsx`, `src/store/swadeSlice.ts` (dealRound action)
 
 ---
 
-## Phase 8 - Card Sorting
+## Phase 8 - Card Sorting ✅ COMPLETE
 **Goal**: Display participants in correct SWADE initiative order
 
-- [ ] Create `src/sort/order.ts` with SWADE sorting logic
-- [ ] Implement card scoring: Jokers > Ace-to-2 > Suit priority (S>H>D>C)
-- [ ] Handle Black Joker > Red Joker precedence
-- [ ] Sort participants by their current card values
-- [ ] Update ParticipantList to show sorted order
-- [ ] Detect Jokers and set `reshuffleAfterRound` flag
-- [ ] **Test**: Correct initiative order (Jokers→A→2, S>H>D>C)
+- [x] Add SWADE sorting logic to selectors (not separate file)
+- [x] Implement card scoring: Jokers > Ace-to-2 > Suit priority (S>H>D>C)
+- [x] Handle Black Joker > Red Joker precedence
+- [x] Sort participants by their current card values in selectParticipants
+- [x] ParticipantList automatically shows sorted order
+- [x] Detect Jokers and set `reshuffleAfterRound` flag
+- [x] Remove cards lookup from state (now static constant)
+- [x] **Test**: Correct initiative order (Jokers→A→2, S>H>D>C)
 
 **Design Reference**: Section 4.4 (Sorting order)
-**Key Files**: `src/sort/order.ts`
+**Key Files**: `src/store/selectors.ts` (getCardScore function), `src/deck/cardIds.ts` (static cardsLookup)
 
 ---
 
-## Phase 9 - End Round
+## Phase 9 - End Round ✅ COMPLETE
 **Goal**: End the current round and handle reshuffling
 
-- [ ] Add "End Round" button to HeaderBar
-- [ ] Implement end round logic: clear per-round state
-- [ ] Check `reshuffleAfterRound` flag and reshuffle if needed
-- [ ] Move all discard cards back to remaining pile when reshuffling
-- [ ] Clear `candidateIds` arrays, keep only `currentCardId`
-- [ ] Set phase to 'between_rounds'
-- [ ] Reset `drewThisRound` flags
-- [ ] **Test**: Reshuffle happens correctly after Joker rounds
+- [x] Add "End Round" button to ControlBar
+- [x] Implement end round logic: clear per-round state
+- [x] Check `reshuffleAfterRound` flag and reshuffle if needed
+- [x] Move all discard cards back to remaining pile when reshuffling
+- [x] Clear `candidateIds` arrays, clear `currentCardId`
+- [x] Set phase to 'between_rounds'
+- [x] Reset `drewThisRound` flags
+- [x] Fix round counter double-increment bug
+- [x] **Test**: Reshuffle happens correctly after Joker rounds
 
 **Design Reference**: Section 4.7 (End Round)
-**Key Files**: `src/components/HeaderBar.tsx`, end round logic
+**Key Files**: `src/components/ControlBar.tsx`, `src/store/swadeSlice.ts` (endRound action)
 
 ---
 

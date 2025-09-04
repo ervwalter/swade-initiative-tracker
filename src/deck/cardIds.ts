@@ -2,13 +2,17 @@
 
 import { CardId, Suit, Rank, Card } from "../store/types";
 
+// Card ID constants
+export const RED_JOKER_ID = 'JK-R' as const;
+export const BLACK_JOKER_ID = 'JK-B' as const;
+
 /**
  * Generate deterministic card ID from rank and suit
  * Examples: "AS" (Ace of Spades), "10H" (Ten of Hearts), "JK-R" (Red Joker)
  */
 export function getCardId(rank: Rank | 'JOKER', suit?: Suit, jokerColor?: 'RED' | 'BLACK'): CardId {
   if (rank === 'JOKER') {
-    return jokerColor === 'RED' ? 'JK-R' : 'JK-B';
+    return jokerColor === 'RED' ? RED_JOKER_ID : BLACK_JOKER_ID;
   }
   return `${rank}${suit}`;
 }
@@ -23,10 +27,10 @@ export function parseCardId(id: CardId): {
   jokerColor?: 'RED' | 'BLACK';
 } | null {
   // Handle Jokers
-  if (id === 'JK-R') {
+  if (id === RED_JOKER_ID) {
     return { rank: 'JOKER', jokerColor: 'RED' };
   }
-  if (id === 'JK-B') {
+  if (id === BLACK_JOKER_ID) {
     return { rank: 'JOKER', jokerColor: 'BLACK' };
   }
 
@@ -65,7 +69,7 @@ export function isValidCardId(id: CardId): boolean {
  * Check if a card ID represents a Joker
  */
 export function isJoker(id: CardId): boolean {
-  return id === 'JK-R' || id === 'JK-B';
+  return id === RED_JOKER_ID || id === BLACK_JOKER_ID;
 }
 
 /**
@@ -164,18 +168,18 @@ export function buildCardsLookup(): Record<CardId, Card> {
   }
   
   // Add Jokers
-  cards['JK-R'] = {
-    id: 'JK-R',
+  cards[RED_JOKER_ID] = {
+    id: RED_JOKER_ID,
     rank: 'JOKER',
     jokerColor: 'RED',
-    label: 'Red Joker'
+    label: 'Joker'
   };
   
-  cards['JK-B'] = {
-    id: 'JK-B',
+  cards[BLACK_JOKER_ID] = {
+    id: BLACK_JOKER_ID,
     rank: 'JOKER', 
     jokerColor: 'BLACK',
-    label: 'Black Joker'
+    label: 'Joker'
   };
   
   return cards;

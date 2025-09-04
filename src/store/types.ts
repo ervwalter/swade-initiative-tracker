@@ -51,11 +51,10 @@ export interface ActNowInsertion {
 }
 
 export interface EncounterState {
-  version: 2;
+  version: 3;
   round: number;               // 0 before first deal; increments each Deal Round
   phase: Phase;                // 'setup' before first round; 'between_rounds' after End Round; 'in_round' during a round
   deck: Deck;
-  cards: Record<CardId, Card>; // static deck catalog (built once, deterministic IDs)
   rows: Record<string, ParticipantRow>;
   turn: { 
     activeRowId: string | null; 

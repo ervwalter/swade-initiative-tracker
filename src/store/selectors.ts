@@ -2,22 +2,25 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from './store';
 import { CardId, ParticipantRow, Card } from './types';
+import { buildCardsLookup } from '../deck/cardIds';
+
+// Static cards lookup - never changes
+export const cardsLookup = buildCardsLookup();
 
 // Base selectors
 export const selectSwadeState = (state: RootState) => state.swade;
 export const selectDeck = (state: RootState) => state.swade.deck;
 export const selectRows = (state: RootState) => state.swade.rows;
-export const selectCards = (state: RootState) => state.swade.cards;
 export const selectTurn = (state: RootState) => state.swade.turn;
 export const selectRound = (state: RootState) => state.swade.round;
 export const selectPhase = (state: RootState) => state.swade.phase;
 export const selectSettings = (state: RootState) => state.swade.settings;
 
 // Helper: Score a card for SWADE ordering
-const getCardScore = (cardId: CardId | undefined, cards: Record<CardId, Card>): number => {
+const getCardScore = (cardId: CardId | undefined): number => {
   if (!cardId) return -1; // No card = lowest priority
   
-  const card = cards[cardId];
+  const card = cardsLookup[cardId];
   if (!card) return -1;
   
   // Jokers first (Black=1000, Red=999)
@@ -42,14 +45,14 @@ const getCardScore = (cardId: CardId | undefined, cards: Record<CardId, Card>): 
 
 // THE main selector - returns ALL participants in SWADE initiative order
 export const selectParticipants = createSelector(
-  [selectRows, selectCards, selectTurn],
-  (rows, cards, turn): ParticipantRow[] => {
+  [selectRows, selectTurn],
+  (rows, turn): ParticipantRow[] => {
     const participants = Object.values(rows);
     
     // Sort by card scores (SWADE initiative order)
     const sorted = participants.sort((a, b) => {
-      const scoreA = getCardScore(a.currentCardId, cards);
-      const scoreB = getCardScore(b.currentCardId, cards);
+      const scoreA = getCardScore(a.currentCardId);
+      const scoreB = getCardScore(b.currentCardId);
       return scoreB - scoreA; // Descending order (best cards first)
     });
     
@@ -128,6 +131,11 @@ export const selectDeckCounts = createSelector(
 
 export const selectNeedsReshuffle = (state: RootState) => 
   state.swade.deck.reshuffleAfterRound;
+
+export const selectParticipantCount = createSelector(
+  [selectRows],
+  (rows) => Object.keys(rows).length
+);
 
 // Game status selector
 export const selectGameSummary = createSelector(
