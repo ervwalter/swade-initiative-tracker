@@ -2,7 +2,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from './store';
 import { CardId, ParticipantRow, Card } from './types';
-import { buildCardsLookup } from '../deck/cardIds';
+import { buildCardsLookup, RED_JOKER_ID, BLACK_JOKER_ID } from '../deck/cardIds';
 
 // Static cards lookup - never changes
 export const cardsLookup = buildCardsLookup();
@@ -49,11 +49,33 @@ export const selectParticipants = createSelector(
   (rows, turn): ParticipantRow[] => {
     const participants = Object.values(rows);
     
-    // Sort by card scores (SWADE initiative order)
+    // Sort by card scores (SWADE initiative order) or by type+name if no cards
     const sorted = participants.sort((a, b) => {
       const scoreA = getCardScore(a.currentCardId);
       const scoreB = getCardScore(b.currentCardId);
-      return scoreB - scoreA; // Descending order (best cards first)
+      
+      // If both have cards, sort by card score
+      if (scoreA > -1 && scoreB > -1) {
+        return scoreB - scoreA; // Descending order (best cards first)
+      }
+      
+      // If neither has cards, sort by type then name
+      if (scoreA === -1 && scoreB === -1) {
+        // Type priority: PC > NPC > GROUP
+        const typeOrder = { 'PC': 0, 'NPC': 1, 'GROUP': 2 };
+        const typeA = typeOrder[a.type];
+        const typeB = typeOrder[b.type];
+        
+        if (typeA !== typeB) {
+          return typeA - typeB; // PC first, then NPC, then GROUP
+        }
+        
+        // Within same type, sort alphabetically by name
+        return a.name.localeCompare(b.name);
+      }
+      
+      // If only one has a card, cards always come first
+      return scoreB - scoreA; // Card holders before non-card holders
     });
     
     // Handle Act Now insertions if present
@@ -83,6 +105,17 @@ export const selectParticipants = createSelector(
   }
 );
 
+// Navigable participants - excludes Jokers since they use Act Now
+export const selectNavigableParticipants = createSelector(
+  [selectParticipants],
+  (participants): ParticipantRow[] => {
+    return participants.filter(p => 
+      !p.currentCardId || 
+      (p.currentCardId !== RED_JOKER_ID && p.currentCardId !== BLACK_JOKER_ID)
+    );
+  }
+);
+
 // Turn navigation selectors
 export const selectActiveParticipant = createSelector(
   [selectRows, selectTurn],
@@ -90,7 +123,7 @@ export const selectActiveParticipant = createSelector(
 );
 
 export const selectNextParticipant = createSelector(
-  [selectParticipants, selectTurn],
+  [selectNavigableParticipants, selectTurn],
   (participants, turn) => {
     if (!turn.activeRowId) return participants[0] || null;
     const currentIndex = participants.findIndex(p => p.id === turn.activeRowId);
@@ -99,7 +132,7 @@ export const selectNextParticipant = createSelector(
 );
 
 export const selectPreviousParticipant = createSelector(
-  [selectParticipants, selectTurn],
+  [selectNavigableParticipants, selectTurn],
   (participants, turn) => {
     if (!turn.activeRowId) return null;
     const currentIndex = participants.findIndex(p => p.id === turn.activeRowId);

@@ -43,7 +43,7 @@ export interface Settings {
   hideNpcFromPlayers: boolean; // global privacy toggle
 }
 
-export type Phase = 'setup' | 'between_rounds' | 'in_round';
+export type Phase = 'setup' | 'between_rounds' | 'cards_dealt' | 'in_round';
 
 export interface ActNowInsertion {
   rowId: string;

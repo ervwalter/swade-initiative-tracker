@@ -55,8 +55,8 @@ export function ParticipantRow({ participant, role }: ParticipantRowProps) {
     <ListItem 
       sx={{ 
         bgcolor: isActive ? 'action.selected' : 'transparent',
-        borderLeft: isActive ? 3 : 0,
-        borderColor: 'primary.main',
+        borderLeft: 3,
+        borderColor: isActive ? 'primary.main' : 'transparent',
         borderLeftStyle: 'solid'
       }}
     >

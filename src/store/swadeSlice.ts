@@ -194,10 +194,55 @@ export const swadeSlice = createSlice({
       if (cardsDealt > 0) {
         const wasSetup = state.round === 0;
         state.round = wasSetup ? 1 : state.round + 1;
-        state.phase = 'in_round';
+        state.phase = 'cards_dealt';
+        
         console.log(`[SWADE] ${wasSetup ? 'Started' : 'Advanced to'} Round ${state.round} (dealt ${cardsDealt} cards)`);
       } else {
         console.error('[SWADE] Deal round failed - no cards were dealt');
+      }
+      
+      incrementRevision(state);
+    },
+
+    // Start the actual round after cards are dealt and any adjustments made
+    startRound: (state) => {
+      if (state.phase !== 'cards_dealt') {
+        console.error('[SWADE] Cannot start round - not in cards_dealt phase');
+        return;
+      }
+      
+      state.phase = 'in_round';
+      
+      // Auto-activate first non-Joker participant (Jokers use Act Now)
+      const participantsWithCards = Object.values(state.rows)
+        .filter(row => row.currentCardId && 
+                       row.currentCardId !== BLACK_JOKER_ID && 
+                       row.currentCardId !== RED_JOKER_ID)
+        .sort((a, b) => {
+          // Use same scoring logic as selectors (but no Jokers here)
+          const getScore = (cardId: string) => {
+            // Parse card for rank/suit scoring
+            const rank = cardId.slice(0, -1);
+            const suit = cardId.slice(-1);
+            
+            const rankScores: Record<string, number> = { 
+              'A': 14, 'K': 13, 'Q': 12, 'J': 11, '10': 10, 
+              '9': 9, '8': 8, '7': 7, '6': 6, '5': 5, '4': 4, '3': 3, '2': 2 
+            };
+            const suitScores: Record<string, number> = { 'S': 4, 'H': 3, 'D': 2, 'C': 1 };
+            
+            return (rankScores[rank] || 0) * 10 + (suitScores[suit] || 0);
+          };
+          
+          return getScore(b.currentCardId!) - getScore(a.currentCardId!);
+        });
+      
+      if (participantsWithCards.length > 0) {
+        state.turn.activeRowId = participantsWithCards[0].id;
+        console.log(`[SWADE] Started Round ${state.round} - activated ${participantsWithCards[0].name} (highest non-Joker card)`);
+      } else {
+        // If only Jokers were dealt, don't activate anyone - they'll use Act Now
+        console.log(`[SWADE] Started Round ${state.round} - only Jokers dealt, waiting for Act Now`);
       }
       
       incrementRevision(state);
@@ -219,6 +264,12 @@ export const swadeSlice = createSlice({
         row.candidateIds = [];
         row.drewThisRound = false;
       });
+      
+      // Clear active turn navigation
+      state.turn.activeRowId = null;
+      if (state.turn.actNow) {
+        state.turn.actNow = [];
+      }
       
       // Handle reshuffle if needed
       if (state.deck.reshuffleAfterRound) {
@@ -428,6 +479,7 @@ export const {
   
   // Round management
   dealRound,
+  startRound,
   endRound,
   
   // Participant management

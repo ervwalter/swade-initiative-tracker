@@ -177,39 +177,27 @@ Based on the implementation plan from `swade-design.md` with 20 incremental, tes
 
 ---
 
-## Phase 10 - Local Undo System
-**Goal**: Implement local-only undo functionality
-
-- [ ] Create `src/state/localState.ts` for local undo management
-- [ ] Set up local component state for undo stack (max 10-20)
-- [ ] Create snapshot function to capture state before changes
-- [ ] Add "Undo" button to HeaderBar
-- [ ] Implement undo action that restores previous state
-- [ ] Ensure undo doesn't affect other clients (local only)
-- [ ] **Test**: Can undo last action, doesn't affect other clients
-
-**Design Reference**: Section 2 (Architecture - Undo), Section 11 (Module Plan)
-**Key Files**: `src/state/localState.ts`, `src/components/UndoButton.tsx`
-
----
-
-## Phase 11 - Turn Navigation
+## Phase 10 - Turn Navigation ✅ COMPLETE
 **Goal**: Navigate through initiative order with Prev/Next
 
-- [ ] Add "Prev" and "Next" buttons to HeaderBar
-- [ ] Implement `activeRowId` tracking in turn state
-- [ ] Highlight currently active participant row
-- [ ] Navigate through sorted participant order
-- [ ] Disable Prev at first row, Next at last row (no wrap-around)
-- [ ] Update `turn.activeRowId` in scene metadata
-- [ ] **Test**: Navigation works, highlights correct participant
+- [x] Add "Prev" and "Next" buttons to ControlBar (not HeaderBar)
+- [x] Implement `activeRowId` tracking in turn state
+- [x] Highlight currently active participant row
+- [x] Navigate through sorted participant order (excludes Jokers)
+- [x] Disable Prev at first row, Next at last row (no wrap-around)
+- [x] Update `turn.activeRowId` in scene metadata
+- [x] Add cards_dealt phase and startRound action for proper workflow
+- [x] Auto-activate highest non-Joker participant when starting round
+- [x] Implement consistent sorting for participants without cards (type + alphabetical)
+- [x] Fix ControlBar height consistency to prevent scrollbar flash
+- [x] **Test**: Navigation works, highlights correct participant
 
 **Design Reference**: Section 4.11 (Turn Navigation)
-**Key Files**: `src/components/HeaderBar.tsx`, turn navigation logic
+**Key Files**: `src/components/ControlBar.tsx`, `src/store/selectors.ts`, `src/store/swadeSlice.ts`
 
 ---
 
-## Phase 12 - Hold Toggle
+## Phase 11 - Hold Toggle
 **Goal**: Allow participants to hold their action
 
 - [ ] Add "Hold" toggle button to ParticipantRow
@@ -224,7 +212,7 @@ Based on the implementation plan from `swade-design.md` with 20 incremental, tes
 
 ---
 
-## Phase 13 - Act Now
+## Phase 12 - Act Now
 **Goal**: Allow held participants to interrupt turn order
 
 - [ ] Add "Act Now" button for participants with `onHold=true`
@@ -240,7 +228,7 @@ Based on the implementation plan from `swade-design.md` with 20 incremental, tes
 
 ---
 
-## Phase 14 - Inactive Toggle
+## Phase 13 - Inactive Toggle
 **Goal**: Mark participants as inactive (skip dealing)
 
 - [ ] Add "Inactive" toggle button to ParticipantRow
@@ -255,7 +243,7 @@ Based on the implementation plan from `swade-design.md` with 20 incremental, tes
 
 ---
 
-## Phase 15 - Privacy System
+## Phase 14 - Privacy System
 **Goal**: Hide NPC cards from players until revealed
 
 - [ ] Add privacy toggle to HeaderBar (GM only)
@@ -271,7 +259,7 @@ Based on the implementation plan from `swade-design.md` with 20 incremental, tes
 
 ---
 
-## Phase 16 - Replacement Draws
+## Phase 15 - Replacement Draws
 **Goal**: Allow drawing additional cards and choosing keeper
 
 - [ ] Add "Draw Additional Card" button to ParticipantRow
@@ -287,7 +275,7 @@ Based on the implementation plan from `swade-design.md` with 20 incremental, tes
 
 ---
 
-## Phase 17 - Late Joiners
+## Phase 16 - Late Joiners
 **Goal**: Add participants mid-round with immediate cards
 
 - [ ] Modify Add Participant dialog for timing choice
@@ -303,7 +291,7 @@ Based on the implementation plan from `swade-design.md` with 20 incremental, tes
 
 ---
 
-## Phase 18 - Context Menu Integration
+## Phase 17 - Context Menu Integration
 **Goal**: Add/remove participants via token context menu
 
 - [ ] Create `src/obr/contextMenu.ts` for OBR integration
@@ -320,7 +308,7 @@ Based on the implementation plan from `swade-design.md` with 20 incremental, tes
 
 ---
 
-## Phase 19 - Groups/Extras Support
+## Phase 18 - Groups/Extras Support
 **Goal**: Allow multiple tokens to share a single initiative card
 
 - [ ] Support multiple `tokenIds` per participant row
@@ -333,6 +321,22 @@ Based on the implementation plan from `swade-design.md` with 20 incremental, tes
 
 **Design Reference**: Section 3 (Data Model - ParticipantRow.tokenIds)
 **Key Files**: Group management components
+
+---
+
+## Phase 19 - Local Undo System
+**Goal**: Implement local-only undo functionality
+
+- [ ] Create `src/state/localState.ts` for local undo management
+- [ ] Set up local component state for undo stack (max 10-20)
+- [ ] Create snapshot function to capture state before changes
+- [ ] Add "Undo" button to HeaderBar
+- [ ] Implement undo action that restores previous state
+- [ ] Ensure undo tracking doesn't get synced to other changes, but when something is undone, the other clients get the updated state
+- [ ] **Test**: Can undo last action, doesn't affect other clients
+
+**Design Reference**: Section 2 (Architecture - Undo), Section 11 (Module Plan)
+**Key Files**: `src/state/localState.ts`, `src/components/UndoButton.tsx`
 
 ---
 
@@ -358,8 +362,9 @@ Based on the implementation plan from `swade-design.md` with 20 incremental, tes
 - Each phase should be completed and tested before moving to the next
 - Phases 1-4 establish the foundation (no functionality yet)
 - Phases 5-9 implement core initiative mechanics
-- Phases 10-17 add advanced features
-- Phases 18-20 add integration and polish
+- Phases 10-16 add advanced features
+- Phases 17-18 add integration features
+- Phases 19-20 add undo system and polish
 
 ## Testing Checklist
 

@@ -1,9 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 
-import { Stack, Box } from "@mui/material";
+import { Stack } from "@mui/material";
 
-
-import OBR, { isImage, Item, Player } from "@owlbear-rodeo/sdk";
+import OBR, { Player } from "@owlbear-rodeo/sdk";
 
 import { getPluginId } from "./getPluginId";
 import { HeaderBar } from "./components/HeaderBar";
@@ -40,7 +39,7 @@ export function InitiativeTracker() {
         resizeObserver.disconnect();
       };
     }
-  }, []);
+  }, [role]); // Add role as dependency so it re-observes when role changes
 
 
   useEffect(() => {
@@ -99,7 +98,7 @@ export function InitiativeTracker() {
 
 
   return (
-    <Stack ref={containerRef} sx={{ pb: 8 }}>
+    <Stack ref={containerRef} sx={{ pb: 0 }}>
       <HeaderBar role={role} />
       <ParticipantList role={role} />
       <ControlBar role={role} />
