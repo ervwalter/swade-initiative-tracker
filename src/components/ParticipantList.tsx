@@ -8,6 +8,7 @@ import GroupAddIcon from '@mui/icons-material/GroupAdd';
 
 import { useAppSelector } from "../store/hooks";
 import { selectParticipants } from "../store/selectors";
+import { RED_JOKER_ID, BLACK_JOKER_ID } from "../deck/cardIds";
 import { ParticipantRow } from "./ParticipantRow";
 
 interface ParticipantListProps {
@@ -58,13 +59,23 @@ export function ParticipantList({ role }: ParticipantListProps) {
 
   return (
     <List>
-      {participants.map((participant) => (
-        <ParticipantRow 
-          key={participant.id}
-          participant={participant}
-          role={role}
-        />
-      ))}
+      {participants.map((participant, index) => {
+        // Calculate if this Joker is "at the top" (no non-Jokers before them)
+        const isJoker = participant.currentCardId === RED_JOKER_ID || participant.currentCardId === BLACK_JOKER_ID;
+        const hasNonJokersAhead = participants.slice(0, index).some(p => 
+          p.currentCardId !== RED_JOKER_ID && p.currentCardId !== BLACK_JOKER_ID
+        );
+        const isJokerAtTop = isJoker && !hasNonJokersAhead;
+        
+        return (
+          <ParticipantRow 
+            key={participant.id}
+            participant={participant}
+            role={role}
+            isJokerAtTop={isJokerAtTop}
+          />
+        );
+      })}
     </List>
   );
 }

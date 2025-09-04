@@ -1,7 +1,7 @@
 // OBR Room Metadata Synchronization for RTK Store
 import type { Store, Unsubscribe } from '@reduxjs/toolkit';
 import OBR from '@owlbear-rodeo/sdk';
-import { writeEncounterState, readEncounterState, getOrInitializeState } from './roomState';
+import { writeEncounterState, readEncounterState, getOrInitializeState, initializeEmptyState } from './roomState';
 import { getPluginId } from '../getPluginId';
 import { isValidStateStructure, migrateState } from './migrations';
 import { setEncounterState } from './swadeSlice';
@@ -47,7 +47,7 @@ export function setupOBRSync(store: Store<RootState>): Unsubscribe {
       console.log('[OBR] Synced to room metadata:', {
         round: state.round,
         phase: state.phase,
-        participants: Object.keys(state.rows).length,
+        participants: state.rows.length,
         deckRemaining: state.deck.remaining.length,
         revision: revision
       });
@@ -85,7 +85,7 @@ export function subscribeToOBRChanges(store: Store<RootState>): () => void {
     console.log('[OBR] Initial state loaded:', {
       round: state.round,
       phase: state.phase,
-      participantCount: Object.keys(state.rows).length,
+      participantCount: state.rows.length,
       deckRemaining: state.deck.remaining.length,
       revision: state.revision
     });
@@ -95,11 +95,15 @@ export function subscribeToOBRChanges(store: Store<RootState>): () => void {
   });
   
   
-  const unsubscribe = OBR.room.onMetadataChange((metadata) => {
+  const unsubscribe = OBR.room.onMetadataChange(async (metadata) => {
     const stateData = metadata[PLUGIN_STATE_KEY];
     
     if (!stateData) {
-      console.log('[OBR] No state data in room metadata');
+      console.log('[OBR] No state data in room metadata - metadata was cleared, resetting to empty state');
+      // When metadata is cleared (e.g., by GM reset), initialize fresh state locally
+      // Don't write to OBR metadata here to avoid infinite loop
+      const emptyState = initializeEmptyState();
+      store.dispatch(setEncounterState(emptyState));
       return;
     }
 

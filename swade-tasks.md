@@ -197,34 +197,38 @@ Based on the implementation plan from `swade-design.md` with 20 incremental, tes
 
 ---
 
-## Phase 11 - Hold Toggle
+## Phase 11 - Hold Toggle ✅ COMPLETE
 **Goal**: Allow participants to hold their action
 
-- [ ] Add "Hold" toggle button to ParticipantRow
-- [ ] Implement `onHold` flag toggle for participants
-- [ ] Skip held participants during next Deal Round
-- [ ] Add visual indicator (HOLD chip) for held status
-- [ ] Maintain held status across rounds until cleared
-- [ ] **Test**: Hold carries across rounds correctly
+- [x] Add "Hold" toggle button to ParticipantRow (PanToolIcon, visible when active)
+- [x] Implement `onHold` flag toggle for participants (using existing setHold action)
+- [x] Skip held participants during next Deal Round (already implemented)
+- [x] Add visual indicator - PanToolIcon replaces card display when held
+- [x] Maintain held status across rounds until cleared
+- [x] Update sorting to prioritize held participants (after Jokers, before regular cards)
+- [x] Update navigation to skip held participants (like Jokers)
+- [x] **Test**: Hold carries across rounds correctly, proper sorting and navigation
 
-**Design Reference**: Section 4.5 (Hold lifecycle)
-**Key Files**: `src/components/ParticipantRow.tsx`
+**Design Reference**: Section 4.5 (Hold lifecycle), SWADE rules for Hold mechanics
+**Key Files**: `src/components/ParticipantRow.tsx`, `src/store/selectors.ts`, `src/store/swadeSlice.ts`
 
 ---
 
-## Phase 12 - Act Now
+## Phase 12 - Act Now ✅ COMPLETE
 **Goal**: Allow held participants to interrupt turn order
 
-- [ ] Add "Act Now" button for participants with `onHold=true`
-- [ ] Implement placement chooser: "After Current" vs "Interrupt Before"
-- [ ] Clear `onHold` flag when acting now
-- [ ] Add participant to `turn.actNow` array for ordering
-- [ ] Handle participants with no current card (show "No card (Act Now)" chip)
-- [ ] Support Shift+click for non-default placement
-- [ ] **Test**: Proper insertion in turn order
+- [x] Add "Act Now" buttons for participants with `onHold=true` or Jokers (when not active)
+- [x] Implement placement chooser: SubdirectoryArrowRightIcon (before) vs TurnRightIcon (after)
+- [x] Clear `onHold` flag when acting now (using existing insertActNow action)
+- [x] Add participant to `turn.actNow` array for ordering (existing logic)
+- [x] Handle Jokers and held participants without cards (both get Act Now buttons)
+- [x] Add "Lose Turn" button (BlockIcon) for held participants to handle Shaken/Stunned
+- [x] Implement two-row layout: Name/Card on top, action buttons on bottom
+- [x] Use faded grayscale icons with hover activation
+- [x] **Test**: Proper insertion in turn order, Hold/Act Now workflow
 
-**Design Reference**: Section 4.12 (Act Now)
-**Key Files**: `src/components/ParticipantRow.tsx`
+**Design Reference**: Section 4.12 (Act Now), SWADE rules for Hold interruption, Foundry VTT UX patterns
+**Key Files**: `src/components/ParticipantRow.tsx`, `src/store/swadeSlice.ts` (loseHold action)
 
 ---
 

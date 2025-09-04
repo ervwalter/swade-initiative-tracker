@@ -1,8 +1,10 @@
 // SWADE Redux Slice
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { EncounterState, CardId } from './types';
+import { EncounterState, CardId, ParticipantRow } from './types';
 import { initializeEmptyState } from './roomState';
 import { RED_JOKER_ID, BLACK_JOKER_ID } from '../deck/cardIds';
+
+import { getCardScore } from "../utils/cardScoring";
 
 const initialState: EncounterState = initializeEmptyState();
 
@@ -20,7 +22,7 @@ export const swadeSlice = createSlice({
     // Card operations - candidate pattern
     addCandidateCard: (state, action: PayloadAction<string>) => {
       const participantId = action.payload;
-      const participant = state.rows[participantId];
+      const participant = state.rows.find(p => p.id === participantId);
       if (!participant || state.deck.remaining.length === 0) {
         console.log('[SWADE] Cannot add candidate - participant not found or no cards');
         return;
@@ -44,7 +46,7 @@ export const swadeSlice = createSlice({
 
     selectKeeperCard: (state, action: PayloadAction<{participantId: string, cardId: string}>) => {
       const { participantId, cardId } = action.payload;
-      const participant = state.rows[participantId];
+      const participant = state.rows.find(p => p.id === participantId);
       
       if (!participant || !participant.candidateIds.includes(cardId)) {
         console.error('[SWADE] Invalid keeper selection:', participantId, cardId);
@@ -72,7 +74,7 @@ export const swadeSlice = createSlice({
 
     clearParticipantCard: (state, action: PayloadAction<string>) => {
       const participantId = action.payload;
-      const participant = state.rows[participantId];
+      const participant = state.rows.find(p => p.id === participantId);
       if (!participant) return;
       
       // Move all candidate cards to discard
@@ -142,8 +144,8 @@ export const swadeSlice = createSlice({
 
     // Deal round - draws one card per eligible participant
     dealRound: (state) => {
-      // Count eligible participants
-      const eligibleParticipants = Object.values(state.rows).filter(row => 
+      // Count eligible participants (array version)
+      const eligibleParticipants = state.rows.filter(row => 
         !row.inactive && !row.onHold
       );
       
@@ -157,8 +159,8 @@ export const swadeSlice = createSlice({
         return;
       }
       
-      // Clear previous round data
-      Object.values(state.rows).forEach(row => {
+      // Clear previous round data (array version)
+      state.rows.forEach(row => {
         row.candidateIds = [];
         row.drewThisRound = false;
         // Keep currentCardId for held participants
@@ -190,13 +192,70 @@ export const swadeSlice = createSlice({
         }
       });
       
+      // Now PHYSICALLY reorder the array by SWADE rules
+      if (cardsDealt > 0) {
+        state.rows.sort((a, b) => {
+          const scoreA = getCardScore(a.currentCardId);
+          const scoreB = getCardScore(b.currentCardId);
+          
+          // Helper function to get sort priority
+          const getSortPriority = (participant: any, score: number) => {
+            // Jokers always first (score 1000+)
+            if (score >= 1000) return 0;
+            // Held participants second
+            if (participant.onHold) return 1;
+            // Regular card holders third
+            if (score > -1) return 2;
+            // Non-card holders last
+            return 3;
+          };
+          
+          const priorityA = getSortPriority(a, scoreA);
+          const priorityB = getSortPriority(b, scoreB);
+          
+          // If different priorities, sort by priority
+          if (priorityA !== priorityB) {
+            return priorityA - priorityB;
+          }
+          
+          // Within same priority group, use specific sorting
+          if (priorityA === 0) {
+            // Both Jokers - sort by card score (Black > Red)
+            return scoreB - scoreA;
+          } else if (priorityA === 1) {
+            // Both held - sort by type then name
+            const typeOrder = { 'PC': 0, 'NPC': 1, 'GROUP': 2 };
+            const typeA = typeOrder[a.type];
+            const typeB = typeOrder[b.type];
+            
+            if (typeA !== typeB) {
+              return typeA - typeB;
+            }
+            return a.name.localeCompare(b.name);
+          } else if (priorityA === 2) {
+            // Both have cards - sort by card score
+            return scoreB - scoreA;
+          } else {
+            // Both no cards - sort by type then name
+            const typeOrder = { 'PC': 0, 'NPC': 1, 'GROUP': 2 };
+            const typeA = typeOrder[a.type];
+            const typeB = typeOrder[b.type];
+            
+            if (typeA !== typeB) {
+              return typeA - typeB;
+            }
+            return a.name.localeCompare(b.name);
+          }
+        });
+      }
+      
       // Only advance round if we successfully dealt cards
       if (cardsDealt > 0) {
         const wasSetup = state.round === 0;
         state.round = wasSetup ? 1 : state.round + 1;
         state.phase = 'cards_dealt';
         
-        console.log(`[SWADE] ${wasSetup ? 'Started' : 'Advanced to'} Round ${state.round} (dealt ${cardsDealt} cards)`);
+        console.log(`[SWADE] ${wasSetup ? 'Started' : 'Advanced to'} Round ${state.round} (dealt ${cardsDealt} cards) and reordered array`);
       } else {
         console.error('[SWADE] Deal round failed - no cards were dealt');
       }
@@ -213,36 +272,14 @@ export const swadeSlice = createSlice({
       
       state.phase = 'in_round';
       
-      // Auto-activate first non-Joker participant (Jokers use Act Now)
-      const participantsWithCards = Object.values(state.rows)
-        .filter(row => row.currentCardId && 
-                       row.currentCardId !== BLACK_JOKER_ID && 
-                       row.currentCardId !== RED_JOKER_ID)
-        .sort((a, b) => {
-          // Use same scoring logic as selectors (but no Jokers here)
-          const getScore = (cardId: string) => {
-            // Parse card for rank/suit scoring
-            const rank = cardId.slice(0, -1);
-            const suit = cardId.slice(-1);
-            
-            const rankScores: Record<string, number> = { 
-              'A': 14, 'K': 13, 'Q': 12, 'J': 11, '10': 10, 
-              '9': 9, '8': 8, '7': 7, '6': 6, '5': 5, '4': 4, '3': 3, '2': 2 
-            };
-            const suitScores: Record<string, number> = { 'S': 4, 'H': 3, 'D': 2, 'C': 1 };
-            
-            return (rankScores[rank] || 0) * 10 + (suitScores[suit] || 0);
-          };
-          
-          return getScore(b.currentCardId!) - getScore(a.currentCardId!);
-        });
+      // Auto-activate first participant in the sorted array (simplified navigation)
+      const firstParticipant = state.rows[0];
       
-      if (participantsWithCards.length > 0) {
-        state.turn.activeRowId = participantsWithCards[0].id;
-        console.log(`[SWADE] Started Round ${state.round} - activated ${participantsWithCards[0].name} (highest non-Joker card)`);
+      if (firstParticipant) {
+        state.turn.activeRowId = firstParticipant.id;
+        console.log(`[SWADE] Started Round ${state.round} - activated ${firstParticipant.name} (first in initiative order)`);
       } else {
-        // If only Jokers were dealt, don't activate anyone - they'll use Act Now
-        console.log(`[SWADE] Started Round ${state.round} - only Jokers dealt, waiting for Act Now`);
+        console.log(`[SWADE] Started Round ${state.round} - no participants to activate`);
       }
       
       incrementRevision(state);
@@ -259,7 +296,7 @@ export const swadeSlice = createSlice({
       }
       
       // Clear participant cards and per-round flags
-      Object.values(state.rows).forEach(row => {
+      state.rows.forEach(row => {
         row.currentCardId = undefined;
         row.candidateIds = [];
         row.drewThisRound = false;
@@ -267,9 +304,6 @@ export const swadeSlice = createSlice({
       
       // Clear active turn navigation
       state.turn.activeRowId = null;
-      if (state.turn.actNow) {
-        state.turn.actNow = [];
-      }
       
       // Handle reshuffle if needed
       if (state.deck.reshuffleAfterRound) {
@@ -308,7 +342,7 @@ export const swadeSlice = createSlice({
       const { name, type, tokenIds = [], dealNow = false } = action.payload;
       const id = `p-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
       
-      state.rows[id] = {
+      const newParticipant: ParticipantRow = {
         id,
         name,
         tokenIds,
@@ -321,14 +355,17 @@ export const swadeSlice = createSlice({
         revealed: type === 'PC' // PCs always visible
       };
       
+      // Add to array
+      state.rows.push(newParticipant);
+      
       // Handle late joiner - draw immediately if requested
       if (dealNow && state.phase === 'in_round' && state.deck.remaining.length > 0) {
-        const cardId = state.deck.remaining.pop();
+        const cardId: CardId | undefined = state.deck.remaining.pop();
         if (cardId) {
           state.deck.inPlay.push(cardId);
-          state.rows[id].currentCardId = cardId;
-          state.rows[id].candidateIds = [cardId];
-          state.rows[id].drewThisRound = true;
+          newParticipant.currentCardId = cardId as CardId;
+          newParticipant.candidateIds = [cardId as CardId];
+          newParticipant.drewThisRound = true;
           
           if (cardId === RED_JOKER_ID || cardId === BLACK_JOKER_ID) {
             state.deck.reshuffleAfterRound = true;
@@ -344,11 +381,13 @@ export const swadeSlice = createSlice({
 
     removeParticipant: (state, action: PayloadAction<string>) => {
       const id = action.payload;
-      const participant = state.rows[id];
-      if (!participant) {
+      const participantIndex = state.rows.findIndex(p => p.id === id);
+      if (participantIndex === -1) {
         console.log('[SWADE] Participant not found for removal:', id);
         return;
       }
+      
+      const participant = state.rows[participantIndex];
       
       // Discard any cards they have
       [...participant.candidateIds].forEach(cardId => {
@@ -359,17 +398,14 @@ export const swadeSlice = createSlice({
         }
       });
       
-      delete state.rows[id];
+      // Remove from array
+      state.rows.splice(participantIndex, 1);
       
       // Clear active turn if needed
       if (state.turn.activeRowId === id) {
         state.turn.activeRowId = null;
       }
       
-      // Remove from act now if present
-      if (state.turn.actNow) {
-        state.turn.actNow = state.turn.actNow.filter(entry => entry.rowId !== id);
-      }
       
       console.log(`[SWADE] Removed participant: ${participant.name}`);
       incrementRevision(state);
@@ -378,7 +414,7 @@ export const swadeSlice = createSlice({
     // Status setters (explicit, not toggles)
     setHold: (state, action: PayloadAction<{id: string, value: boolean}>) => {
       const { id, value } = action.payload;
-      const participant = state.rows[id];
+      const participant = state.rows.find(p => p.id === id);
       if (!participant) return;
       
       participant.onHold = value;
@@ -388,7 +424,7 @@ export const swadeSlice = createSlice({
 
     setInactive: (state, action: PayloadAction<{id: string, value: boolean}>) => {
       const { id, value } = action.payload;
-      const participant = state.rows[id];
+      const participant = state.rows.find(p => p.id === id);
       if (!participant) return;
       
       participant.inactive = value;
@@ -398,11 +434,29 @@ export const swadeSlice = createSlice({
 
     setRevealed: (state, action: PayloadAction<{id: string, value: boolean}>) => {
       const { id, value } = action.payload;
-      const participant = state.rows[id];
+      const participant = state.rows.find(p => p.id === id);
       if (!participant) return;
       
       participant.revealed = value;
       console.log(`[SWADE] ${participant.name} revealed: ${value}`);
+      incrementRevision(state);
+    },
+
+    // Lose hold due to Shaken/Stunned - clears hold and stays in place
+    loseHold: (state, action: PayloadAction<string>) => {
+      const id = action.payload;
+      const participant = state.rows.find(p => p.id === id);
+      if (!participant) return;
+      
+      // Clear hold status and current card - participant stays in same position
+      participant.onHold = false;
+      participant.currentCardId = undefined;
+      participant.candidateIds = [];
+      
+      // Don't move them! They just lose their turn where they are.
+      // Navigation will handle skipping them since they no longer have onHold=true
+      
+      console.log(`[SWADE] ${participant.name} lost hold (Shaken/Stunned) - staying in position`);
       incrementRevision(state);
     },
 
@@ -413,35 +467,69 @@ export const swadeSlice = createSlice({
       
       // Auto-reveal if setting active on hidden participant
       if (id) {
-        const participant = state.rows[id];
+        const participant = state.rows.find(p => p.id === id);
         if (participant && !participant.revealed) {
           participant.revealed = true;
           console.log(`[SWADE] Auto-revealed ${participant.name} on activation`);
         }
       }
       
-      console.log(`[SWADE] Active participant: ${id ? state.rows[id]?.name : 'none'}`);
+      const activeParticipant = id ? state.rows.find(p => p.id === id) : null;
+      console.log(`[SWADE] Active participant: ${activeParticipant?.name || 'none'}`);
       incrementRevision(state);
     },
 
-    // Act Now
+    // Act Now - physically move participant in array
     insertActNow: (state, action: PayloadAction<{id: string, placement: 'before' | 'after'}>) => {
       const { id, placement } = action.payload;
-      const participant = state.rows[id];
-      if (!participant) return;
+      const participantIndex = state.rows.findIndex(p => p.id === id);
+      if (participantIndex === -1) return;
+      
+      const participant = state.rows[participantIndex];
       
       // Clear hold
       participant.onHold = false;
       
-      // Add to act now array
-      if (!state.turn.actNow) state.turn.actNow = [];
-      state.turn.actNow.push({ rowId: id, position: placement });
+      // Find the active participant's position
+      const activeId = state.turn.activeRowId;
+      if (!activeId) {
+        console.log('[SWADE] No active participant to insert relative to');
+        return;
+      }
       
-      // Set as active and reveal
-      state.turn.activeRowId = id;
+      const activeIndex = state.rows.findIndex(p => p.id === activeId);
+      if (activeIndex === -1) {
+        console.log('[SWADE] Active participant not found in array');
+        return;
+      }
+      
+      // Remove participant from current position
+      state.rows.splice(participantIndex, 1);
+      
+      // Calculate insertion position (adjust for removal if needed)
+      let insertIndex = activeIndex;
+      if (participantIndex < activeIndex) {
+        insertIndex--; // Adjust because we removed an item before the active participant
+      }
+      
+      // Insert before or after active participant
+      if (placement === 'before') {
+        state.rows.splice(insertIndex, 0, participant);
+      } else {
+        state.rows.splice(insertIndex + 1, 0, participant);
+      }
+      
+      // Handle active participant based on placement:
+      // - "before": interrupting, so they become active
+      // - "after": waiting until later, so current participant stays active
+      if (placement === 'before') {
+        state.turn.activeRowId = id;
+      }
+      // If placement === 'after', keep the original active participant
+      
       participant.revealed = true;
       
-      console.log(`[SWADE] ${participant.name} acting now (${placement})`);
+      console.log(`[SWADE] ${participant.name} acting now (${placement}) - moved in array`);
       incrementRevision(state);
     },
 
@@ -488,6 +576,7 @@ export const {
   
   // Status setters
   setHold,
+  loseHold,
   setInactive,
   setRevealed,
   

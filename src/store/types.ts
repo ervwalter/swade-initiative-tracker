@@ -45,20 +45,14 @@ export interface Settings {
 
 export type Phase = 'setup' | 'between_rounds' | 'cards_dealt' | 'in_round';
 
-export interface ActNowInsertion {
-  rowId: string;
-  position: 'before' | 'after';
-}
-
 export interface EncounterState {
-  version: 3;
+  version: 4;
   round: number;               // 0 before first deal; increments each Deal Round
   phase: Phase;                // 'setup' before first round; 'between_rounds' after End Round; 'in_round' during a round
   deck: Deck;
-  rows: Record<string, ParticipantRow>;
+  rows: ParticipantRow[];      // Array in display order (no more dynamic sorting)
   turn: { 
     activeRowId: string | null; 
-    actNow?: ActNowInsertion[]; 
   };
   settings: Settings;
   revision: number;           // Increments with each state change, for sync loop detection

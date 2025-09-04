@@ -3,7 +3,7 @@
 import { EncounterState } from "./types";
 
 // Define the current schema version
-export const CURRENT_STATE_VERSION = 3;
+export const CURRENT_STATE_VERSION = 4;
 
 // Type for raw state data (could be any version)
 type RawStateData = Record<string, any>;
@@ -34,6 +34,31 @@ const MIGRATIONS: Record<number, MigrationFunction> = {
     }
     
     state.version = 3;
+    return state;
+  },
+  
+  // Migration from version 3 to 4: Convert rows from Record to Array
+  4: (state: RawStateData): RawStateData => {
+    console.log('[MIGRATION] Upgrading state from v3 to v4: Converting rows from Record to Array');
+    
+    if (state.rows && typeof state.rows === 'object' && !Array.isArray(state.rows)) {
+      // Convert Record<string, ParticipantRow> to ParticipantRow[]
+      const participants = Object.values(state.rows);
+      state.rows = participants;
+      console.log(`[MIGRATION] Converted ${participants.length} participants from Record to Array`);
+    } else if (!Array.isArray(state.rows)) {
+      // If rows is missing or invalid, initialize as empty array
+      state.rows = [];
+      console.log('[MIGRATION] Initialized empty rows array');
+    }
+    
+    // Clean up actNow array if it exists (no longer used)
+    if (state.turn && state.turn.actNow) {
+      delete state.turn.actNow;
+      console.log('[MIGRATION] Removed deprecated actNow array');
+    }
+    
+    state.version = 4;
     return state;
   }
   

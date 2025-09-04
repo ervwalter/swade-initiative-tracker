@@ -26,7 +26,7 @@ export function initializeEmptyState(): EncounterState {
       discard: shuffledDeck.discard,
       reshuffleAfterRound: false
     },
-    rows: {},
+    rows: [],
     turn: {
       activeRowId: null
     },
@@ -71,6 +71,19 @@ export async function writeEncounterState(state: EncounterState): Promise<void> 
     });
   } catch (error) {
     console.error('Failed to write encounter state:', error);
+    throw error;
+  }
+}
+
+// Clear encounter state from room metadata entirely
+export async function clearEncounterState(): Promise<void> {
+  try {
+    await OBR.room.setMetadata({
+      [PLUGIN_STATE_KEY]: undefined
+    });
+    console.log('[OBR] Cleared encounter state from room metadata');
+  } catch (error) {
+    console.error('Failed to clear encounter state:', error);
     throw error;
   }
 }
