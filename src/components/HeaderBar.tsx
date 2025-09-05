@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import { FaUserPlus } from 'react-icons/fa6';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import OBR from "@owlbear-rodeo/sdk";
@@ -23,7 +24,7 @@ import {
   selectDeckCounts,
   selectPrivacyMode 
 } from "../store/selectors";
-import { reset, setPrivacy } from "../store/swadeSlice";
+import { reset, setPrivacy, removeAllNpcsAndExtras } from "../store/swadeSlice";
 import { clearEncounterState } from "../store/roomState";
 import { Phase } from "../store/types";
 import { getPluginId } from "../getPluginId";
@@ -76,7 +77,7 @@ export function HeaderBar({ role }: HeaderBarProps) {
     setMenuAnchor(null);
   };
 
-  const handleReset = async () => {
+  const handleFullReset = async () => {
     if (confirm("Are you sure you want to reset the entire initiative tracker? This will remove all participants and restart from scratch.")) {
       try {
         // Reset local Redux state
@@ -91,6 +92,11 @@ export function HeaderBar({ role }: HeaderBarProps) {
         alert('Reset failed. Could not clear the room metadata.');
       }
     }
+  };
+
+  const handleRemoveAllNpcsAndExtras = () => {
+    dispatch(removeAllNpcsAndExtras());
+    handleMenuClose();
   };
 
   return (
@@ -166,11 +172,17 @@ export function HeaderBar({ role }: HeaderBarProps) {
           transformOrigin={{ horizontal: 'right', vertical: 'top' }}
           anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         >
-          <MenuItem onClick={handleReset}>
+          <MenuItem onClick={handleRemoveAllNpcsAndExtras}>
+            <ListItemIcon>
+              <DeleteSweepIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText primary="Remove All NPCs/Extras" />
+          </MenuItem>
+          <MenuItem onClick={handleFullReset}>
             <ListItemIcon>
               <RestartAltIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText primary="Reset Initiative Tracker" />
+            <ListItemText primary="Full Reset" />
           </MenuItem>
         </Menu>
       )}

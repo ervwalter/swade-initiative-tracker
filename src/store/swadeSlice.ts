@@ -234,7 +234,7 @@ export const swadeSlice = createSlice({
       // Reset reshuffle flag
       state.deck.reshuffleAfterRound = false;
       
-      console.log('[SWADE] Deck shuffled:', remaining.length, 'cards');
+      console.log('[SWADE] Deck shuffled:', state.deck.remaining.length, 'cards');
       incrementRevision(state);
     },
 
@@ -422,6 +422,9 @@ export const swadeSlice = createSlice({
         }
       }
       
+      // Sort participants after adding
+      sortParticipantsByInitiative(state);
+      
       console.log(`[SWADE] Created participant: ${name} (${type}) - ID: ${id}`);
       incrementRevision(state);
     },
@@ -453,8 +456,33 @@ export const swadeSlice = createSlice({
         state.turn.activeRowId = null;
       }
       
-      
       console.log(`[SWADE] Removed participant: ${participant.name}`);
+      incrementRevision(state);
+    },
+
+    removeAllNpcsAndExtras: (state) => {
+      const participantsToRemove = state.rows.filter(p => p.type === 'NPC' || p.type === 'GROUP');
+      
+      // Discard all cards from participants being removed
+      participantsToRemove.forEach(participant => {
+        [...participant.candidateIds].forEach(cardId => {
+          const index = state.deck.inPlay.indexOf(cardId);
+          if (index > -1) {
+            state.deck.inPlay.splice(index, 1);
+            state.deck.discard.push(cardId);
+          }
+        });
+      });
+      
+      // Remove all NPCs and Extras (GROUP type)
+      state.rows = state.rows.filter(p => p.type === 'PC');
+      
+      // Clear active turn if it was on a removed participant
+      if (state.turn.activeRowId && !state.rows.find(p => p.id === state.turn.activeRowId)) {
+        state.turn.activeRowId = null;
+      }
+      
+      console.log(`[SWADE] Removed ${participantsToRemove.length} NPCs/Extras`);
       incrementRevision(state);
     },
 
@@ -623,11 +651,8 @@ export const swadeSlice = createSlice({
       state.round = 0;
       state.phase = 'setup';
       
-      // Clear active participant and act now insertions
+      // Clear active participant
       state.turn.activeRowId = null;
-      if (state.turn.actNow) {
-        state.turn.actNow = [];
-      }
       
       console.log('[SWADE] Initiative ended - participants kept, deck/round reset');
       incrementRevision(state);
@@ -666,6 +691,7 @@ export const {
   // Participant management
   createParticipant,
   removeParticipant,
+  removeAllNpcsAndExtras,
   
   // Status setters
   setHold,

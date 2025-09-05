@@ -8,6 +8,8 @@ import { getPluginId } from "./getPluginId";
 import { HeaderBar } from "./components/HeaderBar";
 import { ParticipantList } from "./components/ParticipantList";
 import { ControlBar } from "./components/ControlBar";
+import { store } from "./store/store";
+import { setupContextMenu } from "./contextMenu";
 
 export function InitiativeTracker() {
   const [role, setRole] = useState<"GM" | "PLAYER">("PLAYER");
@@ -72,65 +74,27 @@ export function InitiativeTracker() {
       });
       contentResizeObserver.observe(containerRef.current);
       
+      // Listen for Redux state changes that might affect UI height
+      const unsubscribeStore = store.subscribe(() => {
+        console.log('[Resize] Redux state changed, triggering resize check');
+        // Use requestAnimationFrame to batch multiple rapid changes and ensure DOM updates
+        requestAnimationFrame(() => {
+          setContainerMaxHeight();
+        });
+      });
+      
       return () => {
         window.removeEventListener('resize', setContainerMaxHeight);
         contentResizeObserver.disconnect();
+        unsubscribeStore();
       };
     }
   }, [role]);
 
 
   useEffect(() => {
-    OBR.contextMenu.create({
-      icons: [
-        {
-          icon: "/icon.svg",
-          label: "Add to Initiative",
-          filter: {
-            every: [
-              { key: "layer", value: "CHARACTER", coordinator: "||" },
-              { key: "layer", value: "MOUNT" },
-              { key: "type", value: "IMAGE" },
-              { key: ["metadata", getPluginId("metadata")], value: undefined },
-            ],
-            permissions: ["UPDATE"],
-          },
-        },
-        {
-          icon: "/icon.svg",
-          label: "Remove from Initiative",
-          filter: {
-            every: [
-              { key: "layer", value: "CHARACTER", coordinator: "||" },
-              { key: "layer", value: "MOUNT" },
-              { key: "type", value: "IMAGE" },
-            ],
-            permissions: ["UPDATE"],
-          },
-        },
-      ],
-      id: getPluginId("menu/toggle"),
-      onClick(context) {
-        OBR.scene.items.updateItems(context.items, (items) => {
-          // Check whether to add the items to initiative or remove them
-          const addToInitiative = items.every(
-            (item) => item.metadata[getPluginId("metadata")] === undefined
-          );
-          let count = 0;
-          for (let item of items) {
-            if (addToInitiative) {
-              item.metadata[getPluginId("metadata")] = {
-                count: `${count}`,
-                active: false,
-              };
-              count += 1;
-            } else {
-              delete item.metadata[getPluginId("metadata")];
-            }
-          }
-        });
-      },
-    });
+    // Setup the new context menu system
+    setupContextMenu();
   }, []);
 
 

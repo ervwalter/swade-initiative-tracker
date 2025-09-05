@@ -335,20 +335,28 @@ Based on the implementation plan from `swade-design.md` with 20 incremental, tes
 
 ---
 
-## Phase 17 - Context Menu Integration
+## Phase 17 - Context Menu Integration ✅ COMPLETE
 **Goal**: Add/remove participants via token context menu
 
-- [ ] Create `src/obr/contextMenu.ts` for OBR integration
-- [ ] Set up "Add to Initiative" context menu item
-- [ ] Filter for IMAGE items on CHARACTER/MOUNT layers
-- [ ] Store `{rowId}` in token metadata for reverse lookup
-- [ ] Implement "Remove from Initiative" context menu
-- [ ] Link tokens to participant rows via `tokenIds` array
-- [ ] Default new participants to NPC type
-- [ ] **Test**: Token selection creates linked participant
+- [x] Create `src/contextMenu.ts` for OBR integration (simplified location)
+- [x] Set up context menu items: "Add as PC", "Add as NPC", "Add as Extra"
+- [x] Filter for IMAGE items on CHARACTER/MOUNT layers (GM-only access)
+- [x] Implement separate context menus for each participant type
+- [x] Handle plural forms based on token selection count (min/max filters)
+- [x] Link tokens to participant rows via `tokenIds` array 
+- [x] Smart name inference: prioritize user text labels, fallback to token names
+- [x] Use Redux store.dispatch directly (no global dispatch pattern)
+- [x] Automatic participant sorting after creation
+- [x] **Test**: Token context menu creates participants correctly
 
 **Design Reference**: Section 7 (Integrations with OBR)
-**Key Files**: `src/obr/contextMenu.ts`
+**Key Files**: `src/contextMenu.ts`
+
+**Implementation Notes**: 
+- Used separate context menus for PC/NPC/Extra instead of smart detection for clearer UX
+- Context menu stays open by design (OBR behavior) but functionality works correctly
+- Each token becomes separate participant (no grouping in this phase)
+- Removed header menu "Remove All NPCs/Extras" and "Full Reset" options added
 
 ---
 

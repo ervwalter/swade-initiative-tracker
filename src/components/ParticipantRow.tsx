@@ -146,7 +146,6 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
         display: 'flex',
         alignItems: 'center',
         gap: 1,
-        minWidth: '60px',
         justifyContent: 'flex-end',
         zIndex: 1
       }}>
@@ -216,7 +215,8 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
         {/* Card/Hold display */}
         {participant.onHold ? (
           <Box sx={{ 
-            width: '50px', 
+            width: '50px',
+            minWidth: '60px',
             height: '28px', 
             display: 'flex', 
             alignItems: 'center', 
@@ -232,7 +232,7 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
             sx={{
               ...getCardStyle(participant.currentCardId!),
               fontWeight: 'bold',
-              minWidth: '50px',
+              minWidth: '60px',
               height: '28px',
               cursor: (role === "GM" && phase === 'cards_dealt') ? 'pointer' : 'default',
               '& .MuiChip-label': {
@@ -241,9 +241,7 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
               }
             }}
           />
-        ) : (
-          <Box sx={{ width: '50px', height: '28px' }} />
-        )}
+        ) : null}
       </Box>
 
       {/* Main content area - leave space for card on right */}
@@ -251,7 +249,10 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
         display: 'flex',
         flexDirection: 'column',
         width: '100%',
-        pr: 8 // Leave space for card area
+        pr: (participant.onHold || currentCard) ? 10 : (role === "GM" ? 4 : 2)
+        // 10 = space for 60px element + gap + menu button
+        // 4 = space for menu button on hover (GM only)
+        // 2 = minimal padding (players)
       }}>
         {/* Row 1: Name */}
         <Box sx={{ mb: 0.5 }}>
