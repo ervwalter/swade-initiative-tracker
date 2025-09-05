@@ -98,3 +98,4 @@ Manual testing in OBR dev room required for:
 - Hold/Act Now complex state transitions
 
 Refer to `swade-design.md` for detailed technical specifications and `swade-prd.md` for user requirements.
+- the dev server is always running.  never run `yarn dev` yourself

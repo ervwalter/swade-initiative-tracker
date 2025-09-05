@@ -1,4 +1,4 @@
-import React from "react";
+import React, { forwardRef } from "react";
 import { 
   Box, 
   List, 
@@ -7,7 +7,7 @@ import {
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 
 import { useAppSelector } from "../store/hooks";
-import { selectParticipants } from "../store/selectors";
+import { selectVisibleParticipants } from "../store/selectors";
 import { RED_JOKER_ID, BLACK_JOKER_ID } from "../deck/cardIds";
 import { ParticipantRow } from "./ParticipantRow";
 
@@ -15,8 +15,8 @@ interface ParticipantListProps {
   role?: "GM" | "PLAYER";
 }
 
-export function ParticipantList({ role }: ParticipantListProps) {
-  const participants = useAppSelector(selectParticipants);
+export const ParticipantList = forwardRef<HTMLUListElement, ParticipantListProps>(({ role }, ref) => {
+  const participants = useAppSelector(state => selectVisibleParticipants(state, role));
 
   if (participants.length === 0) {
     return (
@@ -58,7 +58,7 @@ export function ParticipantList({ role }: ParticipantListProps) {
   }
 
   return (
-    <List>
+    <List ref={ref} sx={{ overflow: 'auto', flex: 1, scrollbarGutter: 'stable' }}>
       {participants.map((participant, index) => {
         // Calculate if this Joker is "at the top" (no non-Jokers before them)
         const isJoker = participant.currentCardId === RED_JOKER_ID || participant.currentCardId === BLACK_JOKER_ID;
@@ -78,4 +78,4 @@ export function ParticipantList({ role }: ParticipantListProps) {
       })}
     </List>
   );
-}
+});

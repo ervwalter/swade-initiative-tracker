@@ -31,7 +31,7 @@ export function initializeEmptyState(): EncounterState {
       activeRowId: null
     },
     settings: {
-      hideNpcFromPlayers: false
+      hideNpcFromPlayers: true
     },
     revision: 0
   };

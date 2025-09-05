@@ -3,10 +3,6 @@ import {
   Box,
   Typography,
   TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Button,
   Stack
 } from "@mui/material";
@@ -19,7 +15,6 @@ import { createParticipant } from "../store/swadeSlice";
 
 export function AddParticipantModal() {
   const [name, setName] = useState("");
-  const [type, setType] = useState<ParticipantType>("PC");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -34,9 +29,7 @@ export function AddParticipantModal() {
     }
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleAddParticipant = async (type: ParticipantType) => {
     if (!name.trim()) return;
     
     setIsSubmitting(true);
@@ -66,12 +59,12 @@ export function AddParticipantModal() {
   };
 
   return (
-    <Box ref={containerRef} sx={{ p: 2, minWidth: 250 }}>
+    <Box ref={containerRef} sx={{ p: 2, minWidth: 380 }}>
       <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
         Add Participant
       </Typography>
       
-      <Stack spacing={2} component="form" onSubmit={handleSubmit}>
+      <Stack spacing={2}>
         <TextField
           label="Name"
           value={name}
@@ -84,39 +77,45 @@ export function AddParticipantModal() {
           size="small"
         />
         
-        <FormControl fullWidth size="small">
-          <InputLabel>Type</InputLabel>
-          <Select
-            value={type}
-            label="Type"
-            onChange={(e) => setType(e.target.value as ParticipantType)}
-            disabled={isSubmitting}
-          >
-            <MenuItem value="PC">PC</MenuItem>
-            <MenuItem value="NPC">NPC</MenuItem>
-            <MenuItem value="GROUP">Group</MenuItem>
-          </Select>
-        </FormControl>
-        
         <Stack direction="row" spacing={1}>
           <Button
-            type="submit"
+            onClick={() => handleAddParticipant("PC")}
             disabled={!name.trim() || isSubmitting}
             size="small"
+            variant="contained"
             sx={{ flex: 1 }}
           >
-            {isSubmitting ? "Adding..." : "Add"}
+            {isSubmitting ? "Adding..." : "+PC"}
           </Button>
           <Button
-            onClick={handleCancel}
-            disabled={isSubmitting}
+            onClick={() => handleAddParticipant("NPC")}
+            disabled={!name.trim() || isSubmitting}
             size="small"
-            color="inherit"
+            variant="contained"
             sx={{ flex: 1 }}
           >
-            Cancel
+            {isSubmitting ? "Adding..." : "+NPC"}
+          </Button>
+          <Button
+            onClick={() => handleAddParticipant("GROUP")}
+            disabled={!name.trim() || isSubmitting}
+            size="small"
+            variant="contained"
+            sx={{ flex: 1 }}
+          >
+            {isSubmitting ? "Adding..." : "+Extra"}
           </Button>
         </Stack>
+        
+        <Button
+          onClick={handleCancel}
+          disabled={isSubmitting}
+          size="small"
+          color="inherit"
+          fullWidth
+        >
+          Cancel
+        </Button>
       </Stack>
     </Box>
   );

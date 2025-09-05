@@ -1,19 +1,27 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { 
   ListItem, 
   ListItemText, 
   Box,
   Chip,
   Typography,
-  useTheme
+  useTheme,
+  Tooltip,
+  IconButton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  Divider
 } from "@mui/material";
 import DeleteIcon from '@mui/icons-material/Delete';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import CheckIcon from '@mui/icons-material/Check';
 import { FaHeart, FaHeartBroken, FaEye, FaEyeSlash, FaBan, FaLongArrowAltRight, FaHandPaper, FaLevelDownAlt } from 'react-icons/fa';
 
 import { ParticipantRow as ParticipantRowType } from "../store/types";
 import { useAppSelector, useAppDispatch } from "../store/hooks";
-import { cardsLookup, selectActiveParticipant, selectPhase } from "../store/selectors";
-import { removeParticipant, setHold, loseHold, insertActNow, setInactive, setRevealed } from "../store/swadeSlice";
+import { cardsLookup, selectActiveParticipant, selectPhase, selectPrivacyMode } from "../store/selectors";
+import { removeParticipant, setHold, loseHold, insertActNow, setInactive, setRevealed, setParticipantType } from "../store/swadeSlice";
 import { RED_JOKER_ID, BLACK_JOKER_ID } from "../deck/cardIds";
 
 interface ParticipantRowProps {
@@ -22,19 +30,46 @@ interface ParticipantRowProps {
   isJokerAtTop: boolean;
 }
 
-export function ParticipantRow({ participant, role, isJokerAtTop }: ParticipantRowProps) {
+export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantRowProps) => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const activeParticipant = useAppSelector(selectActiveParticipant);
   const phase = useAppSelector(selectPhase);
+  const privacyEnabled = useAppSelector(selectPrivacyMode);
+  const ref = useRef<HTMLLIElement>(null);
+  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   
   const isActive = activeParticipant?.id === participant.id;
+
+  // Auto-scroll when this participant becomes active
+  useEffect(() => {
+    if (isActive && ref.current) {
+      ref.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest'
+      });
+    }
+  }, [isActive]);
   const currentCard = participant.currentCardId ? cardsLookup[participant.currentCardId] : null;
   const isJoker = participant.currentCardId === RED_JOKER_ID || participant.currentCardId === BLACK_JOKER_ID;
   const inRound = phase === 'in_round';
 
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setMenuAnchor(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchor(null);
+  };
+
   const handleRemove = () => {
     dispatch(removeParticipant(participant.id));
+    handleMenuClose();
+  };
+
+  const handleChangeType = (newType: 'PC' | 'NPC' | 'GROUP') => {
+    dispatch(setParticipantType({ id: participant.id, type: newType }));
+    handleMenuClose();
   };
 
   const handleToggleHold = () => {
@@ -85,6 +120,7 @@ export function ParticipantRow({ participant, role, isJokerAtTop }: ParticipantR
 
   return (
     <ListItem 
+      ref={ref}
       sx={{ 
         bgcolor: isActive ? 'action.selected' : 'transparent',
         borderLeft: 3,
@@ -110,35 +146,81 @@ export function ParticipantRow({ participant, role, isJokerAtTop }: ParticipantR
         justifyContent: 'flex-end',
         zIndex: 1
       }}>
-        {/* Remove button - only visible on hover, to the left of card */}
+        {/* Menu button - only visible on hover, to the left of card */}
         {role === "GM" && (
-          <Box
-            className="remove-button"
-            onClick={handleRemove}
-            title="Remove Participant"
-            sx={{ 
-              display: 'flex',
-              alignItems: 'center',
-              opacity: 0,
-              transition: 'opacity 0.2s',
-              cursor: 'pointer'
-            }}
-          >
-            <DeleteIcon 
-              sx={{
-                fontSize: '1.25rem',
-                color: 'text.secondary',
-                "&:hover": { 
-                  color: "error.main"
-                }
+          <>
+            <Tooltip title="Options">
+              <IconButton
+                className="remove-button"
+                onClick={handleMenuOpen}
+                size="small"
+                sx={{ 
+                  opacity: 0,
+                  transition: 'opacity 0.2s',
+                  color: 'text.secondary',
+                  "&:hover": { 
+                    color: "primary.main"
+                  }
+                }}
+              >
+                <MoreVertIcon sx={{ fontSize: '1.25rem' }} />
+              </IconButton>
+            </Tooltip>
+            
+            <Menu
+              anchorEl={menuAnchor}
+              open={Boolean(menuAnchor)}
+              onClose={handleMenuClose}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'left',
               }}
-            />
-          </Box>
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'left',
+              }}
+              dense
+            >
+              <MenuItem onClick={() => handleChangeType('PC')} dense>
+                <ListItemIcon>
+                  {participant.type === 'PC' ? <CheckIcon /> : null}
+                </ListItemIcon>
+                PC
+              </MenuItem>
+              <MenuItem onClick={() => handleChangeType('NPC')} dense>
+                <ListItemIcon>
+                  {participant.type === 'NPC' ? <CheckIcon /> : null}
+                </ListItemIcon>
+                NPC
+              </MenuItem>
+              <MenuItem onClick={() => handleChangeType('GROUP')} dense>
+                <ListItemIcon>
+                  {participant.type === 'GROUP' ? <CheckIcon /> : null}
+                </ListItemIcon>
+                Extra
+              </MenuItem>
+              <Divider />
+              <MenuItem onClick={handleRemove} dense>
+                <ListItemIcon>
+                  <DeleteIcon />
+                </ListItemIcon>
+                Remove
+              </MenuItem>
+            </Menu>
+          </>
         )}
         
         {/* Card/Hold display */}
         {participant.onHold ? (
-          <FaHandPaper style={{ fontSize: '1.5rem', color: theme.palette.text.primary, opacity: 1 }} />
+          <Box sx={{ 
+            width: '50px', 
+            height: '28px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center' 
+          }}>
+            <FaHandPaper style={{ fontSize: '1.2rem', color: theme.palette.text.primary, opacity: 1 }} />
+          </Box>
         ) : currentCard ? (
           <Chip 
             label={currentCard.label}
@@ -183,71 +265,79 @@ export function ParticipantRow({ participant, role, isJokerAtTop }: ParticipantR
         {/* Row 2: Action buttons */}
         {role === "GM" && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {/* Visibility toggle - always visible */}
-            <Box
-              onClick={handleToggleRevealed}
-              title={participant.revealed ? "Hide from Players" : "Reveal to Players"}
-              sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-            >
-              {participant.revealed ? (
-                <FaEye style={{ fontSize: '1rem', opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
-              ) : (
-                <FaEyeSlash style={{ fontSize: '1rem', opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
-              )}
-            </Box>
+            {/* Visibility toggle - only show when privacy mode is enabled */}
+            {privacyEnabled && (
+              <Tooltip title={participant.revealed ? "Hide from Players" : "Reveal to Players"}>
+                <Box
+                  onClick={handleToggleRevealed}
+                  sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+                >
+                  {participant.revealed ? (
+                    <FaEye style={{ fontSize: '1rem', opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
+                  ) : (
+                    <FaEyeSlash style={{ fontSize: '1rem', opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
+                  )}
+                </Box>
+              </Tooltip>
+            )}
             
             {/* Incapacitated toggle - always visible */}
-            <Box
-              onClick={handleToggleInactive}
-              title={participant.inactive ? "Mark as Active" : "Mark as Incapacitated"}
-              sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-            >
-              {participant.inactive ? (
-                <FaHeartBroken style={{ fontSize: '1rem', opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
-              ) : (
-                <FaHeart style={{ fontSize: '1rem', opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
-              )}
-            </Box>
+            <Tooltip title={participant.inactive ? "Mark as Active" : "Mark as Incapacitated"}>
+              <Box
+                onClick={handleToggleInactive}
+                sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+              >
+                {participant.inactive ? (
+                  <FaHeartBroken style={{ fontSize: '1rem', opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
+                ) : (
+                  <FaHeart style={{ fontSize: '1rem', opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
+                )}
+              </Box>
+            </Tooltip>
             
             {/* Hold toggle - when active and in round, or always for Jokers */}
             {(isActive || isJoker) && inRound && (
-              <Box
-                onClick={handleToggleHold}
-                title={participant.onHold ? "Clear Hold" : "Go on Hold"}
-                sx={{ display: 'flex', alignItems: 'center' }}
-              >
-                <FaHandPaper style={{ fontSize: '1rem', opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
-              </Box>
+              <Tooltip title={participant.onHold ? "Clear Hold" : "Go on Hold"}>
+                <Box
+                  onClick={handleToggleHold}
+                  sx={{ display: 'flex', alignItems: 'center' }}
+                >
+                  <FaHandPaper style={{ fontSize: '1rem', opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
+                </Box>
+              </Tooltip>
             )}
             
             {/* Lose Turn - only when held and not active and in round */}
             {participant.onHold && !isActive && inRound && (
-              <Box
-                onClick={handleLoseHold}
-                title="Lose Turn (Shaken/Stunned)"
-                sx={{ display: 'flex', alignItems: 'center' }}
-              >
-                <FaBan style={{ fontSize: '1rem', opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
-              </Box>
+              <Tooltip title="Lose Turn (Shaken/Stunned)">
+                <Box
+                  onClick={handleLoseHold}
+                  sx={{ display: 'flex', alignItems: 'center' }}
+                >
+                  <FaBan style={{ fontSize: '1rem', opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
+                </Box>
+              </Tooltip>
             )}
             
             {/* Act Now buttons - for held participants or Jokers at the top when not active and in round */}
             {((participant.onHold || isJokerAtTop) && !isActive && inRound) && (
               <>
-                <Box
-                  onClick={handleActBefore}
-                  title="Act Now"
-                  sx={{ display: 'flex', alignItems: 'center' }}
-                >
-                  <FaLongArrowAltRight style={{ fontSize: '1rem', opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
-                </Box>
-                <Box
-                  onClick={handleActAfter}
-                  title="Act After Current Combatant"
-                  sx={{ display: 'flex', alignItems: 'center' }}
-                >
-                  <FaLevelDownAlt style={{ fontSize: '1rem', opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
-                </Box>
+                <Tooltip title="Act Now">
+                  <Box
+                    onClick={handleActBefore}
+                    sx={{ display: 'flex', alignItems: 'center' }}
+                  >
+                    <FaLongArrowAltRight style={{ fontSize: '1rem', opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
+                  </Box>
+                </Tooltip>
+                <Tooltip title="Act After Current Combatant">
+                  <Box
+                    onClick={handleActAfter}
+                    sx={{ display: 'flex', alignItems: 'center' }}
+                  >
+                    <FaLevelDownAlt style={{ fontSize: '1rem', opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
+                  </Box>
+                </Tooltip>
               </>
             )}
           </Box>
@@ -255,4 +345,4 @@ export function ParticipantRow({ participant, role, isJokerAtTop }: ParticipantR
       </Box>
     </ListItem>
   );
-}
+};

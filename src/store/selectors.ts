@@ -19,12 +19,35 @@ export const selectSettings = (state: RootState) => state.swade.settings;
 // Helper: Score a card for SWADE ordering
 import { getCardScore } from "../utils/cardScoring";
 
+// Privacy setting selector
+export const selectPrivacyMode = (state: RootState) => 
+  state.swade.settings.hideNpcFromPlayers;
+
 // THE main selector - returns participants in stored array order (no sorting)
 export const selectParticipants = createSelector(
   [selectRows],
   (rows): ParticipantRow[] => {
     // Simply return the array as-is - order is maintained by actions
     return rows;
+  }
+);
+
+// Participants filtered by role and privacy settings
+export const selectVisibleParticipants = createSelector(
+  [selectRows, selectPrivacyMode, (state: RootState, role?: "GM" | "PLAYER") => role],
+  (rows, privacyEnabled, role): ParticipantRow[] => {
+    // GM always sees all participants
+    if (role === "GM") {
+      return rows;
+    }
+    
+    // If privacy is disabled, everyone sees all participants
+    if (!privacyEnabled) {
+      return rows;
+    }
+    
+    // For players with privacy enabled, filter out ALL unrevealed participants
+    return rows.filter(participant => participant.revealed);
   }
 );
 
@@ -38,6 +61,8 @@ export const selectNavigableParticipants = createSelector(
 );
 
 // Turn navigation selectors
+export const selectActiveRowId = (state: RootState) => state.swade.turn.activeRowId;
+
 export const selectActiveParticipant = createSelector(
   [selectRows, selectTurn],
   (rows, turn) => turn.activeRowId ? rows.find(r => r.id === turn.activeRowId) || null : null
@@ -64,7 +89,7 @@ export const selectPreviousParticipant = createSelector(
 // Deal eligibility selectors
 export const selectEligibleForCard = createSelector(
   [selectRows],
-  (rows) => rows.filter(r => !r.inactive && !r.onHold)
+  (rows) => rows.filter(r => !r.onHold && !(r.inactive && r.type === 'GROUP'))
 );
 
 export const selectNeedsCard = createSelector(

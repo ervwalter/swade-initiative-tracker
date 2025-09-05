@@ -15,6 +15,17 @@ const incrementRevision = (state: EncounterState) => {
   console.log('[REVISION] Incremented from', oldRevision, 'to', state.revision);
 };
 
+// Helper for auto-revealing participants when they become active
+const autoRevealParticipant = (state: EncounterState, participantId: string | null) => {
+  if (participantId) {
+    const participant = state.rows.find(p => p.id === participantId);
+    if (participant && !participant.revealed) {
+      participant.revealed = true;
+      console.log(`[SWADE] Auto-revealed ${participant.name} on activation`);
+    }
+  }
+};
+
 export const swadeSlice = createSlice({
   name: 'swade',
   initialState,
@@ -145,8 +156,9 @@ export const swadeSlice = createSlice({
     // Deal round - draws one card per eligible participant
     dealRound: (state) => {
       // Count eligible participants (array version)
+      // Skip held participants and inactive Extras (GROUP), but deal to inactive PC/NPC (they need cards for incapacitation checks)
       const eligibleParticipants = state.rows.filter(row => 
-        !row.inactive && !row.onHold
+        !row.onHold && !(row.inactive && row.type === 'GROUP')
       );
       
       // Check if we have enough cards
@@ -166,6 +178,11 @@ export const swadeSlice = createSlice({
         // Keep currentCardId for held participants
         if (!row.onHold) {
           row.currentCardId = undefined;
+        }
+        
+        // Re-hide NPCs if privacy is enabled
+        if (state.settings.hideNpcFromPlayers && row.type !== 'PC') {
+          row.revealed = false;
         }
       });
       
@@ -277,6 +294,7 @@ export const swadeSlice = createSlice({
       
       if (firstParticipant) {
         state.turn.activeRowId = firstParticipant.id;
+        autoRevealParticipant(state, firstParticipant.id);
         console.log(`[SWADE] Started Round ${state.round} - activated ${firstParticipant.name} (first in initiative order)`);
       } else {
         console.log(`[SWADE] Started Round ${state.round} - no participants to activate`);
@@ -442,6 +460,16 @@ export const swadeSlice = createSlice({
       incrementRevision(state);
     },
 
+    setParticipantType: (state, action: PayloadAction<{id: string, type: 'PC' | 'NPC' | 'GROUP'}>) => {
+      const { id, type } = action.payload;
+      const participant = state.rows.find(p => p.id === id);
+      if (!participant) return;
+      
+      participant.type = type;
+      console.log(`[SWADE] ${participant.name} type changed to: ${type}`);
+      incrementRevision(state);
+    },
+
     // Lose hold due to Shaken/Stunned - clears hold and stays in place
     loseHold: (state, action: PayloadAction<string>) => {
       const id = action.payload;
@@ -466,13 +494,7 @@ export const swadeSlice = createSlice({
       state.turn.activeRowId = id;
       
       // Auto-reveal if setting active on hidden participant
-      if (id) {
-        const participant = state.rows.find(p => p.id === id);
-        if (participant && !participant.revealed) {
-          participant.revealed = true;
-          console.log(`[SWADE] Auto-revealed ${participant.name} on activation`);
-        }
-      }
+      autoRevealParticipant(state, id);
       
       const activeParticipant = id ? state.rows.find(p => p.id === id) : null;
       console.log(`[SWADE] Active participant: ${activeParticipant?.name || 'none'}`);
@@ -527,7 +549,8 @@ export const swadeSlice = createSlice({
       }
       // If placement === 'after', keep the original active participant
       
-      participant.revealed = true;
+      // Always reveal participant when they act now (regardless of placement)
+      autoRevealParticipant(state, id);
       
       console.log(`[SWADE] ${participant.name} acting now (${placement}) - moved in array`);
       incrementRevision(state);
@@ -579,6 +602,7 @@ export const {
   loseHold,
   setInactive,
   setRevealed,
+  setParticipantType,
   
   // Turn management
   setActiveParticipant,

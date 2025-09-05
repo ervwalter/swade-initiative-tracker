@@ -232,34 +232,35 @@ Based on the implementation plan from `swade-design.md` with 20 incremental, tes
 
 ---
 
-## Phase 13 - Inactive Toggle
+## Phase 13 - Inactive Toggle ✅ COMPLETE
 **Goal**: Mark participants as inactive (skip dealing)
 
-- [ ] Add "Inactive" toggle button to ParticipantRow
-- [ ] Implement `inactive` flag toggle for participants
-- [ ] Skip inactive participants during Deal Round (never deal)
-- [ ] Add visual indicator (grayed out appearance)
-- [ ] Inactive participants remain visible but don't participate
-- [ ] **Test**: Inactive participants skip dealing correctly
+- [x] Add "Inactive" toggle button to ParticipantRow
+- [x] Implement `inactive` flag toggle for participants
+- [x] Skip inactive participants during Deal Round (never deal)
+- [x] Add visual indicator (grayed out appearance)
+- [x] Inactive participants remain visible but don't participate
+- [x] **Test**: Inactive participants skip dealing correctly
 
 **Design Reference**: Section 4.6 (Deal Round - skip inactive)
 **Key Files**: `src/components/ParticipantRow.tsx`
 
 ---
 
-## Phase 14 - Privacy System
+## Phase 14 - Privacy System ✅ COMPLETE
 **Goal**: Hide NPC cards from players until revealed
 
-- [ ] Add privacy toggle to HeaderBar (GM only)
-- [ ] Implement `hideNpcFromPlayers` setting
-- [ ] Hide NPC/Group rows from player view when privacy enabled
-- [ ] Auto-reveal NPC rows when they become active
-- [ ] Update "Next" button label to "Next & Reveal" when applicable
-- [ ] Check player role for view filtering
-- [ ] **Test**: Player view hides NPC cards appropriately
+- [x] Add privacy toggle to HeaderBar (GM only)
+- [x] Implement `hideNpcFromPlayers` setting
+- [x] Hide NPC/Group rows from player view when privacy enabled
+- [x] Auto-reveal NPC rows when they become active
+- [x] ~~Update "Next" button label to "Next & Reveal" when applicable~~ (Removed per user feedback)
+- [x] Check player role for view filtering
+- [x] **Test**: Player view hides NPC cards appropriately
+- [x] **Bonus**: Redesigned Add Participant dialog with +PC/+NPC/+Group buttons
 
 **Design Reference**: Section 5.2 (Privacy), Section 4.4.1 (Visibility timing)
-**Key Files**: Privacy logic in components
+**Key Files**: `src/components/HeaderBar.tsx`, `src/store/selectors.ts`, `src/components/ParticipantList.tsx`, `src/components/AddParticipantModal.tsx`
 
 ---
 

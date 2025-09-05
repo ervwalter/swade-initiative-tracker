@@ -23,23 +23,61 @@ export function InitiativeTracker() {
   // State initialization is now handled by the OBR sync system automatically
   // No need for manual initialization here - the sync system will load and initialize state
 
-  // Dynamic height management
+  // Simple height management - set container maxHeight to viewport
   const containerRef = useRef<HTMLDivElement>(null);
+  const participantRef = useRef<HTMLUListElement>(null);
+  const lastRequestedHeight = useRef<number>(0);
+  const lastViewportHeight = useRef<number>(0);
   useEffect(() => {
-    if (containerRef.current && ResizeObserver) {
-      const resizeObserver = new ResizeObserver(() => {
-        if (containerRef.current) {
-          // Use scrollHeight to get the total height needed by the content
-          const desiredHeight = containerRef.current.scrollHeight;
-          OBR.action.setHeight(desiredHeight);
+    const setContainerMaxHeight = async () => {
+      if (containerRef.current) {
+        // The container's scrollHeight already represents the full content height
+        // even when constrained by maxHeight - no need to remove maxHeight!
+        const fullContentHeight = containerRef.current.scrollHeight - (participantRef.current?.clientHeight ?? 0) + (participantRef.current?.scrollHeight || 0);
+
+        console.log(`[Resize] Measured full content height: ${fullContentHeight}px (container scrollHeight: ${containerRef.current.scrollHeight}px, participant scrollHeight: ${participantRef.current?.scrollHeight}px)`);
+
+        // Get current viewport height
+        const viewportHeight = window.innerHeight;
+        
+        // Prevent infinite loops by checking if both the requested height AND viewport height are unchanged
+        if (fullContentHeight === lastRequestedHeight.current && viewportHeight === lastViewportHeight.current) {
+          console.log(`[Resize] Skipping request - height ${fullContentHeight}px and viewport ${viewportHeight}px already processed`);
+          return;
         }
+        
+        // Request the full content height from OBR
+        await OBR.action.setHeight(fullContentHeight);
+        lastRequestedHeight.current = fullContentHeight;
+        
+        // Set maxHeight to whatever viewport we actually have
+        containerRef.current.style.maxHeight = `${viewportHeight}px`;
+        lastViewportHeight.current = viewportHeight;
+        
+        console.log(`[Resize] Requested full content height ${fullContentHeight}px from OBR, got ${viewportHeight}px viewport`);
+      }
+    };
+
+    if (containerRef.current && ResizeObserver) {
+      // Set initial maxHeight
+      setContainerMaxHeight();
+      
+      // Listen for viewport changes
+      window.addEventListener('resize', setContainerMaxHeight);
+      
+      // Also listen for container content changes
+      const contentResizeObserver = new ResizeObserver(() => {
+        console.log('[Resize] Container content changed, requesting new height');
+        setContainerMaxHeight();
       });
-      resizeObserver.observe(containerRef.current);
+      contentResizeObserver.observe(containerRef.current);
+      
       return () => {
-        resizeObserver.disconnect();
+        window.removeEventListener('resize', setContainerMaxHeight);
+        contentResizeObserver.disconnect();
       };
     }
-  }, [role]); // Add role as dependency so it re-observes when role changes
+  }, [role]);
 
 
   useEffect(() => {
@@ -100,7 +138,7 @@ export function InitiativeTracker() {
   return (
     <Stack ref={containerRef} sx={{ pb: 0 }}>
       <HeaderBar role={role} />
-      <ParticipantList role={role} />
+      <ParticipantList role={role} ref={participantRef} />
       <ControlBar role={role} />
     </Stack>
   );

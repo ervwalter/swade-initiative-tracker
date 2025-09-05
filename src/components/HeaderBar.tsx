@@ -7,20 +7,23 @@ import {
   Menu,
   MenuItem,
   ListItemIcon,
-  ListItemText 
+  ListItemText,
+  Tooltip
 } from "@mui/material";
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import OBR from "@owlbear-rodeo/sdk";
 
 import { useAppSelector, useAppDispatch } from "../store/hooks";
 import { 
   selectRound, 
   selectPhase, 
-  selectDeckCounts 
+  selectDeckCounts,
+  selectPrivacyMode 
 } from "../store/selectors";
-import { reset } from "../store/swadeSlice";
+import { reset, setPrivacy } from "../store/swadeSlice";
 import { clearEncounterState } from "../store/roomState";
 import { Phase } from "../store/types";
 import { getPluginId } from "../getPluginId";
@@ -43,6 +46,7 @@ export function HeaderBar({ role }: HeaderBarProps) {
   const round = useAppSelector(selectRound);
   const phase = useAppSelector(selectPhase);
   const deckCounts = useAppSelector(selectDeckCounts);
+  const privacyEnabled = useAppSelector(selectPrivacyMode);
   
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const menuOpen = Boolean(menuAnchor);
@@ -54,9 +58,13 @@ export function HeaderBar({ role }: HeaderBarProps) {
     OBR.popover.open({
       id: getPluginId("add-participant"),
       url: "/add-participant",
-      width: 286,
-      height: 217
+      width: 400,
+      height: 180
     });
+  };
+
+  const handleTogglePrivacy = () => {
+    dispatch(setPrivacy(!privacyEnabled));
   };
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -96,26 +104,41 @@ export function HeaderBar({ role }: HeaderBarProps) {
               color: "text.primary"
             }}
           >
-            Initiative Tracker
+            Initiative
           </Typography>
           {role === "GM" && (
             <Box sx={{ display: 'flex', gap: 0.5 }}>
-              <IconButton
-                onClick={handleAddParticipant}
-                size="small"
-                sx={{ color: "primary.main" }}
-                title="Add Participant"
-              >
-                <PersonAddIcon fontSize="small" />
-              </IconButton>
-              <IconButton
-                onClick={handleMenuOpen}
-                size="small"
-                sx={{ color: "text.secondary" }}
-                title="More Options"
-              >
-                <MoreVertIcon fontSize="small" />
-              </IconButton>
+              <Tooltip title={privacyEnabled ? "Hide NPCs by default from players" : "Show all combatants to players"}>
+                <IconButton
+                  onClick={handleTogglePrivacy}
+                  size="small"
+                  sx={{ color: "text.primary" }}
+                >
+                  {privacyEnabled ? (
+                    <FaEyeSlash style={{ fontSize: '1rem' }} />
+                  ) : (
+                    <FaEye style={{ fontSize: '1rem' }} />
+                  )}
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Add Combatant">
+                <IconButton
+                  onClick={handleAddParticipant}
+                  size="small"
+                  sx={{ color: "primary.main" }}
+                >
+                  <PersonAddIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="More Options">
+                <IconButton
+                  onClick={handleMenuOpen}
+                  size="small"
+                  sx={{ color: "text.secondary" }}
+                >
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
             </Box>
           )}
         </Box>
