@@ -26,6 +26,71 @@ const autoRevealParticipant = (state: EncounterState, participantId: string | nu
   }
 };
 
+// Shared Fisher-Yates shuffle utility
+const fisherYatesShuffle = (array: any[]) => {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+};
+
+// Shared sorting function for participants by SWADE initiative order
+const sortParticipantsByInitiative = (state: EncounterState) => {
+  state.rows.sort((a, b) => {
+    const scoreA = getCardScore(a.currentCardId);
+    const scoreB = getCardScore(b.currentCardId);
+    
+    // Helper function to get sort priority
+    const getSortPriority = (participant: any, score: number) => {
+      // Jokers always first (score 1000+)
+      if (score >= 1000) return 0;
+      // Held participants second
+      if (participant.onHold) return 1;
+      // Regular card holders third
+      if (score > -1) return 2;
+      // Non-card holders last
+      return 3;
+    };
+    
+    const priorityA = getSortPriority(a, scoreA);
+    const priorityB = getSortPriority(b, scoreB);
+    
+    // If different priorities, sort by priority
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
+    }
+    
+    // Within same priority group, use specific sorting
+    if (priorityA === 0) {
+      // Both Jokers - sort by card score (Black > Red)
+      return scoreB - scoreA;
+    } else if (priorityA === 1) {
+      // Both held - sort by type then name
+      const typeOrder = { 'PC': 0, 'NPC': 1, 'GROUP': 2 };
+      const typeA = typeOrder[a.type];
+      const typeB = typeOrder[b.type];
+      
+      if (typeA !== typeB) {
+        return typeA - typeB;
+      }
+      return a.name.localeCompare(b.name);
+    } else if (priorityA === 2) {
+      // Both have cards - sort by card score
+      return scoreB - scoreA;
+    } else {
+      // Both no cards - sort by type then name
+      const typeOrder = { 'PC': 0, 'NPC': 1, 'GROUP': 2 };
+      const typeA = typeOrder[a.type];
+      const typeB = typeOrder[b.type];
+      
+      if (typeA !== typeB) {
+        return typeA - typeB;
+      }
+      return a.name.localeCompare(b.name);
+    }
+  });
+};
+
 export const swadeSlice = createSlice({
   name: 'swade',
   initialState,
@@ -79,7 +144,10 @@ export const swadeSlice = createSlice({
       participant.currentCardId = cardId;
       participant.candidateIds = [cardId]; // Keep only the selected card
       
-      console.log(`[SWADE] ${participant.name} kept ${cardId}`);
+      // Resort participants to reflect new initiative order
+      sortParticipantsByInitiative(state);
+      
+      console.log(`[SWADE] ${participant.name} kept ${cardId} - participants resorted`);
       incrementRevision(state);
     },
 
@@ -102,6 +170,27 @@ export const swadeSlice = createSlice({
       participant.drewThisRound = false;
       
       console.log(`[SWADE] Cleared cards for ${participant.name}`);
+      incrementRevision(state);
+    },
+
+    undoLastDraw: (state, action: PayloadAction<string>) => {
+      const participantId = action.payload;
+      const participant = state.rows.find(p => p.id === participantId);
+      if (!participant || participant.candidateIds.length === 0) return;
+      
+      // Remove the last drawn card (most recent)
+      const lastCardId = participant.candidateIds.pop();
+      if (lastCardId) {
+        // Move card from inPlay back to top of remaining deck
+        const inPlayIndex = state.deck.inPlay.indexOf(lastCardId);
+        if (inPlayIndex > -1) {
+          state.deck.inPlay.splice(inPlayIndex, 1);
+          state.deck.remaining.push(lastCardId); // Put back on top of deck
+        }
+        
+        console.log(`[SWADE] Undid draw of ${lastCardId} for ${participant.name}`);
+      }
+      
       incrementRevision(state);
     },
 
@@ -140,11 +229,7 @@ export const swadeSlice = createSlice({
       }
       
       // Fisher-Yates shuffle of remaining cards
-      const remaining = state.deck.remaining;
-      for (let i = remaining.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
-      }
+      fisherYatesShuffle(state.deck.remaining);
       
       // Reset reshuffle flag
       state.deck.reshuffleAfterRound = false;
@@ -211,59 +296,7 @@ export const swadeSlice = createSlice({
       
       // Now PHYSICALLY reorder the array by SWADE rules
       if (cardsDealt > 0) {
-        state.rows.sort((a, b) => {
-          const scoreA = getCardScore(a.currentCardId);
-          const scoreB = getCardScore(b.currentCardId);
-          
-          // Helper function to get sort priority
-          const getSortPriority = (participant: any, score: number) => {
-            // Jokers always first (score 1000+)
-            if (score >= 1000) return 0;
-            // Held participants second
-            if (participant.onHold) return 1;
-            // Regular card holders third
-            if (score > -1) return 2;
-            // Non-card holders last
-            return 3;
-          };
-          
-          const priorityA = getSortPriority(a, scoreA);
-          const priorityB = getSortPriority(b, scoreB);
-          
-          // If different priorities, sort by priority
-          if (priorityA !== priorityB) {
-            return priorityA - priorityB;
-          }
-          
-          // Within same priority group, use specific sorting
-          if (priorityA === 0) {
-            // Both Jokers - sort by card score (Black > Red)
-            return scoreB - scoreA;
-          } else if (priorityA === 1) {
-            // Both held - sort by type then name
-            const typeOrder = { 'PC': 0, 'NPC': 1, 'GROUP': 2 };
-            const typeA = typeOrder[a.type];
-            const typeB = typeOrder[b.type];
-            
-            if (typeA !== typeB) {
-              return typeA - typeB;
-            }
-            return a.name.localeCompare(b.name);
-          } else if (priorityA === 2) {
-            // Both have cards - sort by card score
-            return scoreB - scoreA;
-          } else {
-            // Both no cards - sort by type then name
-            const typeOrder = { 'PC': 0, 'NPC': 1, 'GROUP': 2 };
-            const typeA = typeOrder[a.type];
-            const typeB = typeOrder[b.type];
-            
-            if (typeA !== typeB) {
-              return typeA - typeB;
-            }
-            return a.name.localeCompare(b.name);
-          }
-        });
+        sortParticipantsByInitiative(state);
       }
       
       // Only advance round if we successfully dealt cards
@@ -332,11 +365,7 @@ export const swadeSlice = createSlice({
         }
         
         // Fisher-Yates shuffle
-        const remaining = state.deck.remaining;
-        for (let i = remaining.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
-        }
+        fisherYatesShuffle(state.deck.remaining);
         
         state.deck.reshuffleAfterRound = false;
         console.log('[SWADE] Auto-reshuffled deck after Joker round');
@@ -564,6 +593,46 @@ export const swadeSlice = createSlice({
     },
 
     // System operations
+    endInitiative: (state) => {
+      // Keep participants but clear their card states and reset privacy
+      state.rows.forEach(participant => {
+        participant.currentCardId = undefined;
+        participant.candidateIds = [];
+        participant.drewThisRound = false;
+        participant.onHold = false;
+        
+        // Reset revealed status based on privacy mode
+        if (state.settings.hideNpcFromPlayers && (participant.type === 'NPC' || participant.type === 'GROUP')) {
+          participant.revealed = false;
+        }
+      });
+      
+      // Reset deck to fresh shuffled state
+      const allCardIds = state.deck.remaining.concat(state.deck.inPlay, state.deck.discard);
+      const shuffled = [...allCardIds];
+      fisherYatesShuffle(shuffled);
+      
+      state.deck = {
+        remaining: shuffled,
+        inPlay: [],
+        discard: [],
+        reshuffleAfterRound: false
+      };
+      
+      // Reset round and phase
+      state.round = 0;
+      state.phase = 'setup';
+      
+      // Clear active participant and act now insertions
+      state.turn.activeRowId = null;
+      if (state.turn.actNow) {
+        state.turn.actNow = [];
+      }
+      
+      console.log('[SWADE] Initiative ended - participants kept, deck/round reset');
+      incrementRevision(state);
+    },
+
     reset: () => {
       console.log('[SWADE] State reset to initial');
       return initializeEmptyState();
@@ -584,6 +653,7 @@ export const {
   addCandidateCard,
   selectKeeperCard,
   clearParticipantCard,
+  undoLastDraw,
   drawCard, // Legacy for testing
   discardCard,
   shuffleDeck,
@@ -612,6 +682,7 @@ export const {
   setPrivacy,
   
   // System
+  endInitiative,
   reset,
   setEncounterState
 } = swadeSlice.actions;

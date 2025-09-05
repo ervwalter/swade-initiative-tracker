@@ -264,19 +264,58 @@ Based on the implementation plan from `swade-design.md` with 20 incremental, tes
 
 ---
 
-## Phase 15 - Replacement Draws
+## Phase 15 - Replacement Draws ✅ COMPLETE
 **Goal**: Allow drawing additional cards and choosing keeper
 
-- [ ] Add "Draw Additional Card" button to ParticipantRow
-- [ ] Create `src/components/CardChooser.tsx` modal component
-- [ ] Show all `candidateIds` as selectable cards
-- [ ] Add "Draw Additional" button within chooser modal
-- [ ] Implement keeper selection logic
-- [ ] Move non-kept cards to discard pile immediately
-- [ ] **Test**: Multiple cards drawn, keeper selection works
+- [x] ~~Add "Draw Additional Card" button to ParticipantRow~~ (Alternative: Click on card chips to open modal)
+- [x] Create `src/components/CardChooserModal.tsx` modal component
+- [x] Show all `candidateIds` as selectable cards
+- [x] Add "Draw Additional" button within chooser modal
+- [x] Implement keeper selection logic
+- [x] Move non-kept cards to discard pile immediately
+- [x] Add "Undo Last Draw" functionality for card management
+- [x] Restrict card replacement to GM only and cards_dealt phase only
+- [x] Resort participants after card selection to maintain initiative order
+- [x] Create shared card styling utility (`src/utils/cardStyles.ts`)
+- [x] **Test**: Multiple cards drawn, keeper selection works
 
 **Design Reference**: Section 4.8 (Replacement draws)
-**Key Files**: `src/components/CardChooser.tsx`
+**Key Files**: `src/components/CardChooserModal.tsx`, `src/utils/cardStyles.ts`
+
+**Implementation Notes**: Used modal approach instead of inline buttons for better UX. Card replacement accessible by clicking on card chips in participant rows.
+
+---
+
+## Phase 15.5 - End Initiative Feature ✅ COMPLETE
+**Goal**: Add ability to reset encounter while preserving participants
+
+- [x] Add "End Initiative" button to ControlBar (appears during between_rounds phase)
+- [x] Implement `endInitiative` Redux action that preserves participants but resets deck/round
+- [x] Reset deck to fresh shuffled state (all 54 cards)
+- [x] Reset round counter to 0 and phase to 'setup'  
+- [x] Clear all participant card states (currentCardId, candidateIds, holds)
+- [x] Reset NPC/Group privacy based on hideNpcFromPlayers setting
+- [x] Position button to avoid accidental clicks (before Deal Cards button)
+- [x] Style consistently with End Round button (outlined with StopIcon)
+- [x] **Test**: Participants preserved, deck/round reset correctly
+
+**Key Files**: `src/components/ControlBar.tsx`, `src/store/swadeSlice.ts`
+
+---
+
+## Phase 15.6 - UI/UX Improvements ✅ COMPLETE
+**Goal**: Various user experience enhancements
+
+- [x] Update header text: "Not Active" instead of "Not Started"
+- [x] Update button text: "Start Initiative" for initial setup phase
+- [x] Make participant names non-selectable to prevent accidental text selection
+- [x] Convert Add Participant from popover to modal for consistency
+- [x] Update Add Participant icon to FaUserPlus with "Add Combatant Manually" tooltip
+- [x] Extract shared Fisher-Yates shuffle utility to eliminate code duplication
+- [x] Optimize CSS performance by moving baseStyle object outside function calls
+- [x] Fix misleading modal comments about resizing capabilities
+
+**Key Files**: `src/components/HeaderBar.tsx`, `src/components/ControlBar.tsx`, `src/components/ParticipantRow.tsx`, `src/components/AddParticipantModal.tsx`, `src/store/swadeSlice.ts`, `src/utils/cardStyles.ts`
 
 ---
 

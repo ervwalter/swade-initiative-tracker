@@ -17,12 +17,15 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CheckIcon from '@mui/icons-material/Check';
 import { FaHeart, FaHeartBroken, FaEye, FaEyeSlash, FaBan, FaLongArrowAltRight, FaHandPaper, FaLevelDownAlt } from 'react-icons/fa';
+import OBR from "@owlbear-rodeo/sdk";
 
 import { ParticipantRow as ParticipantRowType } from "../store/types";
 import { useAppSelector, useAppDispatch } from "../store/hooks";
 import { cardsLookup, selectActiveParticipant, selectPhase, selectPrivacyMode } from "../store/selectors";
 import { removeParticipant, setHold, loseHold, insertActNow, setInactive, setRevealed, setParticipantType } from "../store/swadeSlice";
 import { RED_JOKER_ID, BLACK_JOKER_ID } from "../deck/cardIds";
+import { getPluginId } from "../getPluginId";
+import { getBaseCardStyle } from "../utils/cardStyles";
 
 interface ParticipantRowProps {
   participant: ParticipantRowType;
@@ -96,25 +99,26 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
     dispatch(setInactive({ id: participant.id, value: !participant.inactive }));
   };
 
-  const getCardStyle = (cardId: string) => {
-    const card = cardsLookup[cardId];
-    if (!card) return { color: 'black', bgcolor: 'white' };
+  const handleCardClick = () => {
+    // Only GM can modify cards
+    if (role !== "GM") return;
     
-    if (card.rank === 'JOKER') {
-      return {
-        color: card.jokerColor === 'BLACK' ? 'black' : 'red',
-        bgcolor: 'white',
-        border: '1px solid #ddd'
-      };
+    // Only allow replacement draws during cards_dealt phase (before round starts)
+    if (phase !== 'cards_dealt') return;
+    
+    if (currentCard || participant.candidateIds.length > 0) {
+      OBR.modal.open({
+        id: getPluginId("card-chooser"),
+        url: `/card-chooser?participantId=${participant.id}`,
+        width: 500,
+        height: 250,
+        hideBackdrop: false
+      });
     }
-    
-    // Regular cards - red for hearts/diamonds, black for spades/clubs
-    const isRed = card.suit === 'H' || card.suit === 'D';
-    return {
-      color: isRed ? 'red' : 'black',
-      bgcolor: 'white',
-      border: '1px solid #ddd'
-    };
+  };
+
+  const getCardStyle = (cardId: string) => {
+    return getBaseCardStyle(cardId);
   };
 
 
@@ -179,7 +183,6 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
                 vertical: 'top',
                 horizontal: 'left',
               }}
-              dense
             >
               <MenuItem onClick={() => handleChangeType('PC')} dense>
                 <ListItemIcon>
@@ -225,11 +228,13 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
           <Chip 
             label={currentCard.label}
             size="small"
+            onClick={handleCardClick}
             sx={{
               ...getCardStyle(participant.currentCardId!),
               fontWeight: 'bold',
               minWidth: '50px',
               height: '28px',
+              cursor: (role === "GM" && phase === 'cards_dealt') ? 'pointer' : 'default',
               '& .MuiChip-label': {
                 px: 1,
                 fontSize: '1.2rem'
@@ -255,7 +260,8 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
             sx={{ 
               fontWeight: isActive ? 'bold' : 'normal',
               textDecoration: participant.inactive ? 'line-through' : 'none',
-              opacity: participant.inactive ? 0.6 : 1
+              opacity: participant.inactive ? 0.6 : 1,
+              userSelect: 'none'
             }}
           >
             {participant.name}

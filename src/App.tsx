@@ -6,6 +6,7 @@ import { CardHeader, Divider } from "@mui/material";
 import { InitiativeTracker } from "./InitiativeTracker";
 import { store, initializeStoreIfNeeded, cleanupStoreSubscriptions } from "./store/store";
 import { AddParticipantModal } from "./components/AddParticipantModal";
+import { CardChooserModal } from "./components/CardChooserModal";
 import { PluginGate } from "./components/PluginGate";
 
 function AppContent() {
@@ -25,6 +26,8 @@ function AppContent() {
     <Provider store={store}>
       {pathname === '/add-participant' ? (
         <AddParticipantModal />
+      ) : pathname === '/card-chooser' ? (
+        <CardChooserModal />
       ) : (
         <InitiativeTracker />
       )}

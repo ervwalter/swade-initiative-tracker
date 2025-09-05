@@ -20,14 +20,7 @@ export function AddParticipantModal() {
 
   // Store auto-initializes with OBR state - no manual setup needed
 
-  // Resize popover to fit content
-  useEffect(() => {
-    if (containerRef.current) {
-      const { scrollWidth, scrollHeight } = containerRef.current;
-      OBR.popover.setWidth(getPluginId("add-participant"), scrollWidth + 4); // Add small margin
-      OBR.popover.setHeight(getPluginId("add-participant"), scrollHeight + 4);
-    }
-  }, []);
+  // Note: Modal has fixed dimensions unlike popovers
 
   const handleAddParticipant = async (type: ParticipantType) => {
     if (!name.trim()) return;
@@ -45,7 +38,7 @@ export function AddParticipantModal() {
       console.log(`[Modal] Added participant: ${name} (${type})`);
       
       // Close modal
-      await OBR.popover.close(getPluginId("add-participant"));
+      await OBR.modal.close(getPluginId("add-participant"));
       
     } catch (error) {
       console.error('[Modal] Failed to add participant:', error);
@@ -55,16 +48,16 @@ export function AddParticipantModal() {
   };
 
   const handleCancel = async () => {
-    await OBR.popover.close(getPluginId("add-participant"));
+    await OBR.modal.close(getPluginId("add-participant"));
   };
 
   return (
-    <Box ref={containerRef} sx={{ p: 2, minWidth: 380 }}>
-      <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+    <Box ref={containerRef} sx={{ height: '100vh', display: 'flex', flexDirection: 'column', p: 2 }}>
+      <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
         Add Participant
       </Typography>
       
-      <Stack spacing={2}>
+      <Stack spacing={2} sx={{ flex: 1, justifyContent: 'center' }}>
         <TextField
           label="Name"
           value={name}

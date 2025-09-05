@@ -16,7 +16,7 @@ import {
   selectNextParticipant,
   selectPreviousParticipant
 } from "../store/selectors";
-import { dealRound, startRound, endRound, setActiveParticipant } from "../store/swadeSlice";
+import { dealRound, startRound, endRound, endInitiative, setActiveParticipant } from "../store/swadeSlice";
 
 interface ControlBarProps {
   role?: "GM" | "PLAYER";
@@ -42,6 +42,10 @@ export function ControlBar({ role }: ControlBarProps) {
     dispatch(endRound());
   };
 
+  const handleEndInitiative = () => {
+    dispatch(endInitiative());
+  };
+
   const handlePrevious = () => {
     if (previousParticipant) {
       dispatch(setActiveParticipant(previousParticipant.id));
@@ -63,6 +67,7 @@ export function ControlBar({ role }: ControlBarProps) {
   const canDeal = phase === 'setup' || phase === 'between_rounds';
   const canStart = phase === 'cards_dealt';
   const canEnd = phase === 'in_round';
+  const canEndInitiative = phase === 'between_rounds';
   const canNavigate = phase === 'in_round' && participantCount > 0;
   const hasParticipants = participantCount > 0;
 
@@ -107,6 +112,18 @@ export function ControlBar({ role }: ControlBarProps) {
             </>
           )}
           
+          {/* End Initiative button */}
+          {canEndInitiative && (
+            <Button
+              variant="outlined"
+              startIcon={<StopIcon />}
+              onClick={handleEndInitiative}
+              size="small"
+            >
+              End Initiative
+            </Button>
+          )}
+          
           {/* Deal Cards button */}
           {canDeal && (
             <Button
@@ -116,7 +133,7 @@ export function ControlBar({ role }: ControlBarProps) {
               disabled={!hasParticipants}
               size="small"
             >
-              {isSetup ? "Deal Cards" : "Deal Cards"}
+              {isSetup ? "Start Initiative" : "Deal Cards"}
             </Button>
           )}
           

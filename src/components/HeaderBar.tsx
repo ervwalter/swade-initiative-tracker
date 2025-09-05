@@ -10,9 +10,9 @@ import {
   ListItemText,
   Tooltip
 } from "@mui/material";
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import { FaUserPlus } from 'react-icons/fa6';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import OBR from "@owlbear-rodeo/sdk";
 
@@ -29,7 +29,7 @@ import { Phase } from "../store/types";
 import { getPluginId } from "../getPluginId";
 
 function getRoundDisplay(round: number, phase: Phase): string {
-  if (phase === 'setup') return "Not Started";
+  if (phase === 'setup') return "Not Active";
   return `Round ${round}`;
 }
 
@@ -55,11 +55,12 @@ export function HeaderBar({ role }: HeaderBarProps) {
   const deckStatus = formatDeckStatus(deckCounts);
 
   const handleAddParticipant = () => {
-    OBR.popover.open({
+    OBR.modal.open({
       id: getPluginId("add-participant"),
       url: "/add-participant",
       width: 400,
-      height: 180
+      height: 220,
+      hideBackdrop: false
     });
   };
 
@@ -121,13 +122,13 @@ export function HeaderBar({ role }: HeaderBarProps) {
                   )}
                 </IconButton>
               </Tooltip>
-              <Tooltip title="Add Combatant">
+              <Tooltip title="Add Combatant Manually">
                 <IconButton
                   onClick={handleAddParticipant}
                   size="small"
                   sx={{ color: "primary.main" }}
                 >
-                  <PersonAddIcon fontSize="small" />
+                  <FaUserPlus size="1rem" />
                 </IconButton>
               </Tooltip>
               <Tooltip title="More Options">

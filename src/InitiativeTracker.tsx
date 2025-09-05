@@ -33,7 +33,7 @@ export function InitiativeTracker() {
       if (containerRef.current) {
         // The container's scrollHeight already represents the full content height
         // even when constrained by maxHeight - no need to remove maxHeight!
-        const fullContentHeight = containerRef.current.scrollHeight - (participantRef.current?.clientHeight ?? 0) + (participantRef.current?.scrollHeight || 0);
+        const fullContentHeight = containerRef.current.scrollHeight - (participantRef.current?.clientHeight ?? 0) + (participantRef.current?.scrollHeight ?? 0);
 
         console.log(`[Resize] Measured full content height: ${fullContentHeight}px (container scrollHeight: ${containerRef.current.scrollHeight}px, participant scrollHeight: ${participantRef.current?.scrollHeight}px)`);
 
