@@ -2,7 +2,7 @@
 // Shared function to avoid circular dependencies between slices and selectors
 
 import { CardId } from "../store/types";
-import { BLACK_JOKER_ID, RED_JOKER_ID } from "../deck/cardIds";
+import { BLACK_JOKER_ID, RED_JOKER_ID } from "./cardIds";
 
 /**
  * Calculate the SWADE initiative score for a card

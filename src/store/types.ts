@@ -13,7 +13,7 @@ export interface Card {
   label: string;         // e.g., 'A♠', '10♦', 'Red Joker', 'Black Joker'
 }
 
-// Note: getCardId function moved to src/deck/cardIds.ts
+// Note: getCardId function moved to src/utils/cardIds.ts
 
 export interface Deck {
   remaining: CardId[];    // top of deck is end of array (pop)

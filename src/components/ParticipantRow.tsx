@@ -23,7 +23,7 @@ import { ParticipantRow as ParticipantRowType } from "../store/types";
 import { useAppSelector, useAppDispatch } from "../store/hooks";
 import { cardsLookup, selectActiveParticipant, selectPhase, selectPrivacyMode } from "../store/selectors";
 import { removeParticipant, setHold, loseHold, insertActNow, setInactive, setRevealed, setParticipantType } from "../store/swadeSlice";
-import { RED_JOKER_ID, BLACK_JOKER_ID } from "../deck/cardIds";
+import { RED_JOKER_ID, BLACK_JOKER_ID } from "../utils/cardIds";
 import { getPluginId } from "../getPluginId";
 import { getBaseCardStyle } from "../utils/cardStyles";
 
@@ -102,9 +102,6 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
   const handleCardClick = () => {
     // Only GM can modify cards
     if (role !== "GM") return;
-    
-    // Only allow replacement draws during cards_dealt phase (before round starts)
-    if (phase !== 'cards_dealt') return;
     
     if (currentCard || participant.candidateIds.length > 0) {
       OBR.modal.open({
@@ -234,7 +231,7 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
               fontWeight: 'bold',
               minWidth: '60px',
               height: '28px',
-              cursor: (role === "GM" && phase === 'cards_dealt') ? 'pointer' : 'default',
+              cursor: role === "GM" ? 'pointer' : 'default',
               '& .MuiChip-label': {
                 px: 1,
                 fontSize: '1.2rem'

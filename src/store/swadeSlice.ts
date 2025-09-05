@@ -2,7 +2,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { EncounterState, CardId, ParticipantRow } from './types';
 import { initializeEmptyState } from './roomState';
-import { RED_JOKER_ID, BLACK_JOKER_ID } from '../deck/cardIds';
+import { RED_JOKER_ID, BLACK_JOKER_ID } from '../utils/cardIds';
 
 import { getCardScore } from "../utils/cardScoring";
 
@@ -32,6 +32,38 @@ const fisherYatesShuffle = (array: any[]) => {
     const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
   }
+};
+
+// Helper function to deal a single card, handling reshuffle if needed
+const dealSingleCard = (state: EncounterState): CardId | null => {
+  // If no cards remaining, reshuffle discard pile
+  if (state.deck.remaining.length === 0) {
+    if (state.deck.discard.length === 0) {
+      console.error('[SWADE] Cannot deal card - no cards available in deck or discard');
+      return null;
+    }
+    
+    // Move discard back to remaining and shuffle
+    state.deck.remaining.push(...state.deck.discard);
+    state.deck.discard = [];
+    fisherYatesShuffle(state.deck.remaining);
+    console.log('[SWADE] Auto-reshuffled deck (was empty)');
+  }
+  
+  // Deal the card
+  const cardId = state.deck.remaining.pop();
+  if (cardId) {
+    state.deck.inPlay.push(cardId);
+    
+    // Check for Jokers to set reshuffle flag
+    if (cardId === RED_JOKER_ID || cardId === BLACK_JOKER_ID) {
+      state.deck.reshuffleAfterRound = true;
+    }
+    
+    return cardId as CardId;
+  }
+  
+  return null;
 };
 
 // Shared sorting function for participants by SWADE initiative order
@@ -99,23 +131,19 @@ export const swadeSlice = createSlice({
     addCandidateCard: (state, action: PayloadAction<string>) => {
       const participantId = action.payload;
       const participant = state.rows.find(p => p.id === participantId);
-      if (!participant || state.deck.remaining.length === 0) {
-        console.log('[SWADE] Cannot add candidate - participant not found or no cards');
+      if (!participant) {
+        console.log('[SWADE] Cannot add candidate - participant not found');
         return;
       }
       
-      const cardId = state.deck.remaining.pop();
+      const cardId = dealSingleCard(state);
       if (cardId) {
-        state.deck.inPlay.push(cardId);
         participant.candidateIds.push(cardId);
-        
-        // Check for joker
-        if (cardId === RED_JOKER_ID || cardId === BLACK_JOKER_ID) {
-          state.deck.reshuffleAfterRound = true;
-        }
         
         console.log(`[SWADE] Added candidate ${cardId} to ${participant.name}`,
           `(${participant.candidateIds.length} candidates)`);
+      } else {
+        console.error(`[SWADE] Failed to deal candidate card to ${participant.name}`);
       }
       incrementRevision(state);
     },
@@ -194,18 +222,6 @@ export const swadeSlice = createSlice({
       incrementRevision(state);
     },
 
-    // Legacy drawCard for simple deck testing
-    drawCard: (state) => {
-      const cardId = state.deck.remaining.pop();
-      if (cardId) {
-        state.deck.inPlay.push(cardId);
-        console.log('[SWADE] Drew card:', cardId, 
-          `(${state.deck.remaining.length} remaining, ${state.deck.inPlay.length} in play)`);
-      } else {
-        console.log('[SWADE] No cards remaining to draw');
-      }
-      incrementRevision(state);
-    },
 
     discardCard: (state, action: PayloadAction<CardId>) => {
       const cardId = action.payload;
@@ -246,15 +262,7 @@ export const swadeSlice = createSlice({
         !row.onHold && !(row.inactive && row.type === 'GROUP')
       );
       
-      // Check if we have enough cards
-      if (state.deck.remaining.length < eligibleParticipants.length) {
-        console.error('[SWADE] Not enough cards remaining for all eligible participants', {
-          remaining: state.deck.remaining.length,
-          needed: eligibleParticipants.length
-        });
-        // Don't start the round if we can't deal to everyone
-        return;
-      }
+      // No need to check card count - dealSingleCard handles reshuffling automatically
       
       // Clear previous round data (array version)
       state.rows.forEach(row => {
@@ -275,22 +283,16 @@ export const swadeSlice = createSlice({
       
       // Deal to eligible participants
       eligibleParticipants.forEach(row => {
-        const cardId = state.deck.remaining.pop();
+        const cardId = dealSingleCard(state);
         if (cardId) {
-          state.deck.inPlay.push(cardId);
           row.currentCardId = cardId;
           row.candidateIds = [cardId];
           row.drewThisRound = true;
           cardsDealt++;
           
-          // Check for Jokers
-          if (cardId === RED_JOKER_ID || cardId === BLACK_JOKER_ID) {
-            state.deck.reshuffleAfterRound = true;
-          }
-          
           console.log(`[SWADE] Dealt ${cardId} to ${row.name}`);
         } else {
-          console.error(`[SWADE] Failed to deal card to ${row.name} - no cards remaining`);
+          console.error(`[SWADE] Failed to deal card to ${row.name} - no cards available`);
         }
       });
       
@@ -384,9 +386,8 @@ export const swadeSlice = createSlice({
       name: string;
       type: 'PC' | 'NPC' | 'GROUP';
       tokenIds?: string[];
-      dealNow?: boolean;
     }>) => {
-      const { name, type, tokenIds = [], dealNow = false } = action.payload;
+      const { name, type, tokenIds = [] } = action.payload;
       const id = `p-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
       
       const newParticipant: ParticipantRow = {
@@ -405,20 +406,17 @@ export const swadeSlice = createSlice({
       // Add to array
       state.rows.push(newParticipant);
       
-      // Handle late joiner - draw immediately if requested
-      if (dealNow && state.phase === 'in_round' && state.deck.remaining.length > 0) {
-        const cardId: CardId | undefined = state.deck.remaining.pop();
+      // Handle late joiner - draw immediately if cards have been dealt
+      if (state.phase === 'cards_dealt' || state.phase === 'in_round') {
+        const cardId = dealSingleCard(state);
         if (cardId) {
-          state.deck.inPlay.push(cardId);
-          newParticipant.currentCardId = cardId as CardId;
-          newParticipant.candidateIds = [cardId as CardId];
+          newParticipant.currentCardId = cardId;
+          newParticipant.candidateIds = [cardId];
           newParticipant.drewThisRound = true;
           
-          if (cardId === RED_JOKER_ID || cardId === BLACK_JOKER_ID) {
-            state.deck.reshuffleAfterRound = true;
-          }
-          
           console.log(`[SWADE] Late joiner ${name} drew ${cardId}`);
+        } else {
+          console.error(`[SWADE] Failed to deal card to late joiner ${name}`);
         }
       }
       
@@ -679,7 +677,6 @@ export const {
   selectKeeperCard,
   clearParticipantCard,
   undoLastDraw,
-  drawCard, // Legacy for testing
   discardCard,
   shuffleDeck,
   

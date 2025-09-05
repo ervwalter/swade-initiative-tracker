@@ -55,8 +55,7 @@ function addToInitiativeAsType(items: Item[], participantType: ParticipantType):
     store.dispatch(createParticipant({
       name,
       type: participantType,
-      tokenIds: [item.id],
-      dealNow: false
+      tokenIds: [item.id]
     }));
     
     console.log(`[SWADE] Created ${participantType} participant: "${name}"`);

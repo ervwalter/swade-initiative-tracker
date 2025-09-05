@@ -31,8 +31,7 @@ export function AddParticipantModal() {
       // Dispatch Redux action instead of direct OBR write
       store.dispatch(createParticipant({
         name: name.trim(),
-        type,
-        tokenIds: []
+        type
       }));
       
       console.log(`[Modal] Added participant: ${name} (${type})`);

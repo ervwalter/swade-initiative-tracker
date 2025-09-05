@@ -8,7 +8,7 @@ import GroupAddIcon from '@mui/icons-material/GroupAdd';
 
 import { useAppSelector } from "../store/hooks";
 import { selectVisibleParticipants } from "../store/selectors";
-import { RED_JOKER_ID, BLACK_JOKER_ID } from "../deck/cardIds";
+import { RED_JOKER_ID, BLACK_JOKER_ID } from "../utils/cardIds";
 import { ParticipantRow } from "./ParticipantRow";
 
 interface ParticipantListProps {

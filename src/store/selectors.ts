@@ -2,7 +2,7 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from './store';
 import { CardId, ParticipantRow, Card } from './types';
-import { buildCardsLookup, RED_JOKER_ID, BLACK_JOKER_ID } from '../deck/cardIds';
+import { buildCardsLookup, RED_JOKER_ID, BLACK_JOKER_ID } from '../utils/cardIds';
 
 // Static cards lookup - never changes
 export const cardsLookup = buildCardsLookup();
@@ -51,14 +51,8 @@ export const selectVisibleParticipants = createSelector(
   }
 );
 
-// Navigable participants - now includes everyone for simplified navigation
-export const selectNavigableParticipants = createSelector(
-  [selectParticipants],
-  (participants): ParticipantRow[] => {
-    // Include all participants - Prev/Next will navigate through everyone
-    return participants;
-  }
-);
+// Note: selectNavigableParticipants removed - was just returning input without transformation
+// Use selectParticipants directly instead
 
 // Turn navigation selectors
 export const selectActiveRowId = (state: RootState) => state.swade.turn.activeRowId;
@@ -69,7 +63,7 @@ export const selectActiveParticipant = createSelector(
 );
 
 export const selectNextParticipant = createSelector(
-  [selectNavigableParticipants, selectTurn],
+  [selectParticipants, selectTurn],
   (participants, turn) => {
     if (!turn.activeRowId) return participants[0] || null;
     const currentIndex = participants.findIndex(p => p.id === turn.activeRowId);
@@ -78,7 +72,7 @@ export const selectNextParticipant = createSelector(
 );
 
 export const selectPreviousParticipant = createSelector(
-  [selectNavigableParticipants, selectTurn],
+  [selectParticipants, selectTurn],
   (participants, turn) => {
     if (!turn.activeRowId) return null;
     const currentIndex = participants.findIndex(p => p.id === turn.activeRowId);

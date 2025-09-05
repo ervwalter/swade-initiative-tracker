@@ -3,27 +3,32 @@
 import OBR from "@owlbear-rodeo/sdk";
 import { getPluginId } from "../getPluginId";
 import { EncounterState, ParticipantRow, Card, CardId } from "./types";
-import { generateAllCardIds } from "../deck/cardIds";
-import { createShuffledDeck } from "../deck/deck";
+import { generateAllCardIds } from "../utils/cardIds";
 import { migrateState, isValidStateStructure, CURRENT_STATE_VERSION } from "./migrations";
 
 const PLUGIN_STATE_KEY = getPluginId("state");
 
-// Note: Card building functions moved to src/deck/cardIds.ts
+// Note: Card building functions moved to src/utils/cardIds.ts
 
 // Initialize empty encounter state
 export function initializeEmptyState(): EncounterState {
   const allCardIds = generateAllCardIds();
-  const shuffledDeck = createShuffledDeck(allCardIds);
+  
+  // Fisher-Yates shuffle
+  const shuffled = [...allCardIds];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
   
   return {
     version: CURRENT_STATE_VERSION,
     round: 0,
     phase: 'setup',
     deck: {
-      remaining: shuffledDeck.remaining,
+      remaining: shuffled,
       inPlay: [],
-      discard: shuffledDeck.discard,
+      discard: [],
       reshuffleAfterRound: false
     },
     rows: [],

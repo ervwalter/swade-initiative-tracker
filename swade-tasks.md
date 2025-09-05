@@ -319,19 +319,26 @@ Based on the implementation plan from `swade-design.md` with 20 incremental, tes
 
 ---
 
-## Phase 16 - Late Joiners
+## Phase 16 - Late Joiners ✅ COMPLETE
 **Goal**: Add participants mid-round with immediate cards
 
-- [ ] Modify Add Participant dialog for timing choice
-- [ ] Add "Deal now" vs "Join next round" radio buttons
-- [ ] Default to "Deal now" when round > 0
-- [ ] Draw card immediately for "Deal now" option
-- [ ] Insert late joiner into correct sorted position
-- [ ] Set `drewThisRound=true` for immediate draws
-- [ ] **Test**: Late joiner appears in correct initiative position
+- [x] Remove dealNow parameter - make automatic based on phase
+- [x] Auto-deal cards when added during `in_round` phase
+- [x] No cards dealt during `setup` or `between_rounds` phases  
+- [x] Remove card manipulation restrictions (GM can replace cards anytime)
+- [x] Simplify API - no timing choice UI needed
+- [x] Insert late joiner into correct sorted position
+- [x] Set `drewThisRound=true` for immediate draws
+- [x] **Test**: Late joiner appears in correct initiative position
 
 **Design Reference**: Section 4.9 (Late joiners)
-**Key Files**: Add participant dialog, deal logic
+**Key Files**: `src/store/swadeSlice.ts`, `src/components/ParticipantRow.tsx`, `src/contextMenu.ts`, `src/components/AddParticipantModal.tsx`
+
+**Implementation Notes**:
+- Removed `dealNow` parameter from `createParticipant` action for cleaner API
+- Automatic behavior: participants added during `in_round` phase get cards immediately
+- GMs can now click cards to replace them at any time (not just during `cards_dealt` phase)
+- Simplified all participant creation points to use consistent interface
 
 ---
 
