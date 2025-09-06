@@ -1,5 +1,6 @@
 import { Theme as MuiTheme, createTheme } from "@mui/material/styles";
 import ThemeProvider from "@mui/material/styles/ThemeProvider";
+import { CssBaseline } from "@mui/material";
 import OBR, { Theme } from "@owlbear-rodeo/sdk";
 import { useEffect, useState } from "react";
 
@@ -26,6 +27,13 @@ function getTheme(theme?: Theme) {
           disableRipple: true,
         },
       },
+      MuiCssBaseline: {
+        styleOverrides: theme ? {
+          body: {
+            color: theme.text.primary,
+          },
+        } : undefined,
+      },
     },
   });
 }
@@ -47,5 +55,10 @@ export function PluginThemeProvider({
     return OBR.theme.onChange(updateTheme);
   }, []);
 
-  return <ThemeProvider theme={theme}>{children}</ThemeProvider>;
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      {children}
+    </ThemeProvider>
+  );
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Chip } from '@mui/material';
+import { Chip, useTheme } from '@mui/material';
 import { getBaseCardStyle } from '../utils/cardStyles';
 import { cardsLookup } from '../store/selectors';
 
@@ -24,6 +24,7 @@ export function ActionCard({
   className,
   sx = {}
 }: ActionCardProps) {
+  const theme = useTheme();
   const card = cardsLookup[cardId];
   
   if (!card) {
@@ -39,7 +40,7 @@ export function ActionCard({
       disabled={disabled}
       className={className}
       sx={{
-        ...getBaseCardStyle(cardId),
+        ...getBaseCardStyle(cardId, theme),
         outline: selected ? '3px solid' : 'none',
         outlineColor: selected ? 'error.main' : 'transparent',
         outlineOffset: '2px',

@@ -288,9 +288,9 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
                   sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
                 >
                   {participant.revealed ? (
-                    <FaEye style={{ fontSize: '1rem', opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
+                    <FaEye style={{ fontSize: '1rem', color: theme.palette.text.secondary, opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
                   ) : (
-                    <FaEyeSlash style={{ fontSize: '1rem', opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
+                    <FaEyeSlash style={{ fontSize: '1rem', color: theme.palette.text.secondary, opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
                   )}
                 </Box>
               </Tooltip>
@@ -303,9 +303,9 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
                 sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
               >
                 {participant.inactive ? (
-                  <FaHeartBroken style={{ fontSize: '1rem', opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
+                  <FaHeartBroken style={{ fontSize: '1rem', color: theme.palette.text.secondary, opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
                 ) : (
-                  <FaHeart style={{ fontSize: '1rem', opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
+                  <FaHeart style={{ fontSize: '1rem', color: theme.palette.text.secondary, opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
                 )}
               </Box>
             </Tooltip>
@@ -317,7 +317,7 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
                   onClick={handleToggleHold}
                   sx={{ display: 'flex', alignItems: 'center' }}
                 >
-                  <FaHandPaper style={{ fontSize: '1rem', opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
+                  <FaHandPaper style={{ fontSize: '1rem', color: theme.palette.text.secondary, opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
                 </Box>
               </Tooltip>
             )}
@@ -329,7 +329,7 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
                   onClick={handleLoseHold}
                   sx={{ display: 'flex', alignItems: 'center' }}
                 >
-                  <FaBan style={{ fontSize: '1rem', opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
+                  <FaBan style={{ fontSize: '1rem', color: theme.palette.text.secondary, opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
                 </Box>
               </Tooltip>
             )}
@@ -342,7 +342,7 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
                     onClick={handleActBefore}
                     sx={{ display: 'flex', alignItems: 'center' }}
                   >
-                    <FaLongArrowAltRight style={{ fontSize: '1rem', opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
+                    <FaLongArrowAltRight style={{ fontSize: '1rem', color: theme.palette.text.secondary, opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
                   </Box>
                 </Tooltip>
                 <Tooltip title="Act After Current Combatant">
@@ -350,7 +350,7 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
                     onClick={handleActAfter}
                     sx={{ display: 'flex', alignItems: 'center' }}
                   >
-                    <FaLevelDownAlt style={{ fontSize: '1rem', opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
+                    <FaLevelDownAlt style={{ fontSize: '1rem', color: theme.palette.text.secondary, opacity: 0.5, transition: "opacity 0.2s, color 0.2s", cursor: 'pointer' }} />
                   </Box>
                 </Tooltip>
               </>

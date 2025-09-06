@@ -43,7 +43,7 @@ export const ParticipantList = forwardRef<HTMLUListElement, ParticipantListProps
           color="text.secondary" 
           align="center"
         >
-          No participants added
+          No combatants added
         </Typography>
         <Typography 
           variant="caption" 
@@ -51,7 +51,7 @@ export const ParticipantList = forwardRef<HTMLUListElement, ParticipantListProps
           align="center"
           sx={{ mt: 0.5 }}
         >
-          Add participants to start initiative
+          Add combatants to start initiative
         </Typography>
       </Box>
     );

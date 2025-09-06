@@ -8,7 +8,8 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
-  Tooltip
+  Tooltip,
+  useTheme
 } from "@mui/material";
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
@@ -46,6 +47,7 @@ interface HeaderBarProps {
 
 export function HeaderBar({ role }: HeaderBarProps) {
   const dispatch = useAppDispatch();
+  const theme = useTheme();
   const round = useAppSelector(selectRound);
   const phase = useAppSelector(selectPhase);
   const deckCounts = useAppSelector(selectDeckCounts);
@@ -59,7 +61,7 @@ export function HeaderBar({ role }: HeaderBarProps) {
   const deckStatus = formatDeckStatus(deckCounts);
 
   const handleAddParticipant = () => {
-    captureCheckpoint('Add Participant');
+    captureCheckpoint('Add Combatant');
     OBR.modal.open({
       id: getPluginId("add-participant"),
       url: "/add-participant",
@@ -83,7 +85,7 @@ export function HeaderBar({ role }: HeaderBarProps) {
   };
 
   const handleFullReset = async () => {
-    if (confirm("Are you sure you want to reset the entire initiative tracker? This will remove all participants and restart from scratch.")) {
+    if (confirm("Are you sure you want to reset the entire initiative tracker? This will remove all combatants and restart from scratch.")) {
       try {
         // Clear undo history first (before state changes)
         clearUndoHistory();
@@ -132,9 +134,9 @@ export function HeaderBar({ role }: HeaderBarProps) {
                   sx={{ color: "text.primary" }}
                 >
                   {privacyEnabled ? (
-                    <FaEyeSlash style={{ fontSize: '1rem' }} />
+                    <FaEyeSlash style={{ fontSize: '1rem', color: theme.palette.text.primary }} />
                   ) : (
-                    <FaEye style={{ fontSize: '1rem' }} />
+                    <FaEye style={{ fontSize: '1rem', color: theme.palette.text.primary }} />
                   )}
                 </IconButton>
               </Tooltip>

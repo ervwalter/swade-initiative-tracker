@@ -53,7 +53,7 @@ export function AddParticipantModal() {
   return (
     <Box ref={containerRef} sx={{ height: '100vh', display: 'flex', flexDirection: 'column', p: 2 }}>
       <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
-        Add Participant
+        Add Combatant
       </Typography>
       
       <Stack spacing={2} sx={{ flex: 1, justifyContent: 'center' }}>

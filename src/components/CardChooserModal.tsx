@@ -170,7 +170,7 @@ export function CardChooserModal() {
         {/* No cards message */}
         {candidateCards.length === 0 && (
           <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-            No cards drawn for this participant yet
+            No cards drawn for this combatant yet
           </Typography>
         )}
       </Stack>
