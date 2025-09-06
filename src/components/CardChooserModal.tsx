@@ -4,10 +4,6 @@ import {
   Typography,
   Button,
   Stack,
-  Divider,
-  Card,
-  CardContent,
-  useTheme,
   IconButton,
   Tooltip
 } from "@mui/material";
@@ -20,14 +16,13 @@ import { store } from "../store/store";
 import { addCandidateCard, selectKeeperCard, undoLastDraw } from "../store/swadeSlice";
 import { cardsLookup } from "../store/selectors";
 import { useAppSelector } from "../store/hooks";
+import { ParticipantRow, Card } from "../store/types";
 import { ActionCard } from "./ActionCard";
 
 export function CardChooserModal() {
-  const theme = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedCardId, setSelectedCardId] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showDiscardWarning, setShowDiscardWarning] = useState(false);
 
   // Get participant ID from URL params
   const urlParams = new URLSearchParams(window.location.search);
@@ -35,7 +30,7 @@ export function CardChooserModal() {
 
   // Get participant data from Redux store
   const participant = useAppSelector(state => 
-    state.swade.rows.find((p: any) => p.id === participantId)
+    state.swade.rows.find((p: ParticipantRow) => p.id === participantId)
   );
 
   const remainingCards = useAppSelector(state => state.swade.deck.remaining.length);
@@ -56,7 +51,7 @@ export function CardChooserModal() {
 
   const currentCard = participant.currentCardId ? cardsLookup[participant.currentCardId] : null;
   const candidateCards = participant.candidateIds.map((cardId: string) => cardsLookup[cardId]).filter(Boolean);
-  const additionalCards = candidateCards.filter((card: any) => card.id !== participant.currentCardId);
+  const additionalCards = candidateCards.filter((card: Card) => card.id !== participant.currentCardId);
 
   const handleDrawAdditional = () => {
     if (remainingCards > 0) {
@@ -99,7 +94,7 @@ export function CardChooserModal() {
     await OBR.modal.close(getPluginId("card-chooser"));
   };
 
-  const renderCard = (card: any) => {
+  const renderCard = (card: Card) => {
     const isSelected = card.id === selectedCardId;
     return (
       <ActionCard

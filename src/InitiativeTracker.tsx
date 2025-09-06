@@ -4,7 +4,6 @@ import { Stack, Box } from "@mui/material";
 
 import OBR, { Player } from "@owlbear-rodeo/sdk";
 
-import { getPluginId } from "./getPluginId";
 import { HeaderBar } from "./components/HeaderBar";
 import { ParticipantList } from "./components/ParticipantList";
 import { ControlBar } from "./components/ControlBar";
@@ -14,7 +13,7 @@ import { store } from "./store/store";
 import { useAppSelector } from "./store/hooks";
 import { selectPhase } from "./store/selectors";
 import { useContextMenu } from "./hooks/useContextMenu";
-import { useUndo } from "./contexts/UndoContext";
+import { useUndo } from "./hooks/useUndo";
 
 export function InitiativeTracker() {
   const [role, setRole] = useState<"GM" | "PLAYER">("PLAYER");
@@ -120,7 +119,7 @@ export function InitiativeTracker() {
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [role]); // Remove canUndo and performUndo from dependencies to prevent frequent re-creation
+  }, [role, canUndo, performUndo]);
 
   return (
     <Stack ref={containerRef} sx={{ pb: 0 }}>

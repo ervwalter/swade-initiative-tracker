@@ -47,7 +47,7 @@ export interface Settings {
 export type Phase = 'setup' | 'between_rounds' | 'cards_dealt' | 'in_round';
 
 export interface EncounterState {
-  version: 4;
+  version: 1;
   round: number;               // 0 before first deal; increments each Deal Round
   phase: Phase;                // 'setup' before first round; 'between_rounds' after End Round; 'in_round' during a round
   deck: Deck;

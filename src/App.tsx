@@ -1,8 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Provider } from 'react-redux';
-
-import OBR from "@owlbear-rodeo/sdk";
-import { CardHeader, Divider } from "@mui/material";
 import { InitiativeTracker } from "./InitiativeTracker";
 import { store, initializeStoreIfNeeded, cleanupStoreSubscriptions } from "./store/store";
 import { AddParticipantModal } from "./components/AddParticipantModal";

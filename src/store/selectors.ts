@@ -1,8 +1,8 @@
 // RTK Selectors for SWADE state
 import { createSelector } from '@reduxjs/toolkit';
 import { RootState } from './store';
-import { CardId, ParticipantRow, Card } from './types';
-import { buildCardsLookup, RED_JOKER_ID, BLACK_JOKER_ID } from '../utils/cardIds';
+import { ParticipantRow } from './types';
+import { buildCardsLookup } from '../utils/cardIds';
 
 // Static cards lookup - never changes
 export const cardsLookup = buildCardsLookup();
@@ -15,9 +15,6 @@ export const selectTurn = (state: RootState) => state.swade.turn;
 export const selectRound = (state: RootState) => state.swade.round;
 export const selectPhase = (state: RootState) => state.swade.phase;
 export const selectSettings = (state: RootState) => state.swade.settings;
-
-// Helper: Score a card for SWADE ordering
-import { getCardScore } from "../utils/cardScoring";
 
 // Privacy setting selector
 export const selectPrivacyMode = (state: RootState) => 

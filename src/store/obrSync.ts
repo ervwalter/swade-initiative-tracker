@@ -9,19 +9,17 @@ import type { EncounterState } from './types';
 import type { RootState } from './store';
 
 // Debounce utility
-function debounce<T extends (...args: any[]) => any>(
-  func: T,
+function debounce(
+  func: (state: EncounterState) => Promise<void>,
   wait: number
-): (...args: Parameters<T>) => void {
+): (state: EncounterState) => void {
   let timeout: ReturnType<typeof setTimeout>;
-  return (...args: Parameters<T>) => {
+  return (state: EncounterState) => {
     clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
+    timeout = setTimeout(() => func(state), wait);
   };
 }
 
-// Module-level tracking of last synced revision
-let lastSyncedRevision = 0;
 
 // Setup OBR synchronization using state subscription
 export function setupOBRSync(store: Store<RootState>): Unsubscribe {
@@ -42,7 +40,6 @@ export function setupOBRSync(store: Store<RootState>): Unsubscribe {
         return;
       }
       
-      lastSyncedRevision = revision;
       await writeEncounterState(state);
       console.log('[OBR] Synced to room metadata:', {
         round: state.round,

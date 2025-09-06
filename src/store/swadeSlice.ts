@@ -27,7 +27,7 @@ const autoRevealParticipant = (state: EncounterState, participantId: string | nu
 };
 
 // Shared Fisher-Yates shuffle utility
-const fisherYatesShuffle = (array: any[]) => {
+const fisherYatesShuffle = <T>(array: T[]) => {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
@@ -73,7 +73,7 @@ const sortParticipantsByInitiative = (state: EncounterState) => {
     const scoreB = getCardScore(b.currentCardId);
     
     // Helper function to get sort priority
-    const getSortPriority = (participant: any, score: number) => {
+    const getSortPriority = (participant: ParticipantRow, score: number) => {
       // Jokers always first (score 1000+)
       if (score >= 1000) return 0;
       // Held participants second

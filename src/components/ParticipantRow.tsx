@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { 
-  ListItem, 
-  ListItemText, 
+  ListItem,
   Box,
   Typography,
   useTheme,
@@ -24,7 +23,7 @@ import { cardsLookup, selectActiveParticipant, selectPhase, selectPrivacyMode } 
 import { removeParticipant, setHold, loseHold, insertActNow, setInactive, setRevealed, setParticipantType } from "../store/swadeSlice";
 import { RED_JOKER_ID, BLACK_JOKER_ID } from "../utils/cardIds";
 import { getPluginId } from "../getPluginId";
-import { useUndo } from "../contexts/UndoContext";
+import { useUndo } from "../hooks/useUndo";
 import { ParticipantAvatar } from "./ParticipantAvatar";
 import { ActionCard } from "./ActionCard";
 

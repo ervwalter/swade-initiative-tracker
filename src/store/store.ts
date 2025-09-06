@@ -49,6 +49,6 @@ export type AppDispatch = typeof store.dispatch;
 
 // For debugging in development
 if (import.meta.env.DEV) {
-  (window as any).__REDUX_STORE__ = store;
+  (window as typeof window & { __REDUX_STORE__: typeof store }).__REDUX_STORE__ = store;
   console.log('[RTK] Store configured with middleware');
 }

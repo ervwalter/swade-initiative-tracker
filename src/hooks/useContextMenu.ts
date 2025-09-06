@@ -7,7 +7,7 @@ import { createParticipant } from "../store/swadeSlice";
 import { getPluginId } from "../getPluginId";
 import { store } from "../store/store";
 import type { ParticipantType } from "../store/types";
-import { useUndo } from '../contexts/UndoContext';
+import { useUndo } from './useUndo';
 
 /**
  * Infer a name for the token from its properties

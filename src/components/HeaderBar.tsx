@@ -29,7 +29,7 @@ import { reset, setPrivacy, removeAllNpcsAndExtras } from "../store/swadeSlice";
 import { clearEncounterState } from "../store/roomState";
 import { Phase } from "../store/types";
 import { getPluginId } from "../getPluginId";
-import { useUndo } from "../contexts/UndoContext";
+import { useUndo } from "../hooks/useUndo";
 import { UndoButton } from "./UndoButton";
 
 function getRoundDisplay(round: number, phase: Phase): string {

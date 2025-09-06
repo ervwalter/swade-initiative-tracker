@@ -17,7 +17,7 @@ import {
   selectPreviousParticipant
 } from "../store/selectors";
 import { dealRound, startRound, endRound, endInitiative, setActiveParticipant } from "../store/swadeSlice";
-import { useUndo } from "../contexts/UndoContext";
+import { useUndo } from "../hooks/useUndo";
 
 interface ControlBarProps {
   role?: "GM" | "PLAYER";

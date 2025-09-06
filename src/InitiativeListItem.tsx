@@ -11,7 +11,7 @@ import { InitiativeItem } from "./InitiativeItem";
 
 type InitiativeListItemProps = {
   initiative: InitiativeItem;
-  onCountChange: (count: string) => void;
+  onCountChange: (_value: string) => void;
   showHidden: boolean;
 };
 
@@ -79,8 +79,8 @@ export function InitiativeListItem({
           }}
           value={initiative.count}
           onChange={(e) => {
-            const newCount = e.target.value;
-            onCountChange(newCount);
+            const value = e.target.value;
+            onCountChange(value);
           }}
           onDoubleClick={(e) => e.stopPropagation()}
         />

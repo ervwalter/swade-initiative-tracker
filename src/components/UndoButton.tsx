@@ -3,7 +3,7 @@
 
 import { IconButton, Tooltip } from '@mui/material';
 import UndoIcon from '@mui/icons-material/Undo';
-import { useUndo } from '../contexts/UndoContext';
+import { useUndo } from '../hooks/useUndo';
 
 export function UndoButton() {
   const { canUndo, undoDescription, performUndo } = useUndo();

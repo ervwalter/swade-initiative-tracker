@@ -2,7 +2,7 @@
 
 import OBR from "@owlbear-rodeo/sdk";
 import { getPluginId } from "../getPluginId";
-import { EncounterState, ParticipantRow, Card, CardId } from "./types";
+import { EncounterState } from "./types";
 import { generateAllCardIds } from "../utils/cardIds";
 import { migrateState, isValidStateStructure, CURRENT_STATE_VERSION } from "./migrations";
 
@@ -56,7 +56,7 @@ export async function readEncounterState(): Promise<EncounterState | null> {
     if (isValidStateStructure(stateData)) {
       // Apply any necessary migrations
       const migratedState = migrateState(stateData);
-      console.log('[OBR] Raw state revision:', (stateData as EncounterState).revision ?? 'undefined');
+      console.log('[OBR] Raw state revision:', (stateData as unknown as EncounterState).revision ?? 'undefined');
       console.log('[OBR] Migrated state revision:', migratedState.revision);
       return migratedState;
     }
@@ -95,7 +95,7 @@ export async function clearEncounterState(): Promise<void> {
 
 // Subscribe to encounter state changes
 export function subscribeToEncounterState(
-  callback: (state: EncounterState | null) => void
+  callback: (encounterState: EncounterState | null) => void
 ): () => void {
   const handleMetadataChange = (metadata: Record<string, unknown>) => {
     const stateData = metadata[PLUGIN_STATE_KEY];

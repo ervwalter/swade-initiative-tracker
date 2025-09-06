@@ -88,7 +88,7 @@ export class LocalUndoStore {
           if (!mostRecent?.timestamp || (now - mostRecent.timestamp) > this.MAX_AGE) {
             keysToRemove.push(key);
           }
-        } catch (error) {
+        } catch {
           // Remove corrupted data
           keysToRemove.push(key);
         }

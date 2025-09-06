@@ -2,7 +2,7 @@ import { cardsLookup } from "../store/selectors";
 import { Theme } from "@mui/material/styles";
 
 // Generate base style object with theme awareness
-const getBaseStyle = (theme: Theme) => ({
+const getBaseStyle = () => ({
   cursor: 'pointer',
   fontWeight: 'bold',
   minWidth: '50px',
@@ -21,7 +21,7 @@ const getBaseStyle = (theme: Theme) => ({
 
 export const getBaseCardStyle = (cardId: string, theme: Theme) => {
   const card = cardsLookup[cardId];
-  const baseStyle = getBaseStyle(theme);
+  const baseStyle = getBaseStyle();
   
   if (!card) return { 
     color: 'black', 

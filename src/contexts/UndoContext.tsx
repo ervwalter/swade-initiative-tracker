@@ -1,22 +1,12 @@
 // Undo Context Provider
 // Provides undo functionality through React context with localStorage persistence
 
-import { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
+import { useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { store } from '../store/store';
 import { setEncounterState } from '../store/swadeSlice';
 import { LocalUndoStore } from '../store/localUndoStore';
-
-interface UndoContextValue {
-  canUndo: boolean;
-  undoDescription: string | null;
-  performUndo: () => void;
-  captureCheckpoint: (description: string) => void;
-  clearUndoHistory: () => void;
-  getCheckpointCount: () => number;
-}
-
-const UndoContext = createContext<UndoContextValue | null>(null);
+import { UndoContext, UndoContextValue } from './UndoContextDefinition';
 
 interface UndoProviderProps {
   children: ReactNode;
@@ -97,14 +87,3 @@ export function UndoProvider({ children }: UndoProviderProps) {
   );
 }
 
-/**
- * Hook to access undo functionality
- * Must be used within UndoProvider
- */
-export function useUndo(): UndoContextValue {
-  const context = useContext(UndoContext);
-  if (!context) {
-    throw new Error('useUndo must be used within an UndoProvider');
-  }
-  return context;
-}
