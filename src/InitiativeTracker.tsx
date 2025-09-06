@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 
-import { Stack } from "@mui/material";
+import { Stack, Box } from "@mui/material";
 
 import OBR, { Player } from "@owlbear-rodeo/sdk";
 
@@ -8,11 +8,15 @@ import { getPluginId } from "./getPluginId";
 import { HeaderBar } from "./components/HeaderBar";
 import { ParticipantList } from "./components/ParticipantList";
 import { ControlBar } from "./components/ControlBar";
+import { BetweenRoundsMessage } from "./components/BetweenRoundsMessage";
 import { store } from "./store/store";
+import { useAppSelector } from "./store/hooks";
+import { selectPhase } from "./store/selectors";
 import { setupContextMenu } from "./contextMenu";
 
 export function InitiativeTracker() {
   const [role, setRole] = useState<"GM" | "PLAYER">("PLAYER");
+  const phase = useAppSelector(selectPhase);
 
   useEffect(() => {
     const handlePlayerChange = (player: Player) => {
@@ -102,7 +106,30 @@ export function InitiativeTracker() {
   return (
     <Stack ref={containerRef} sx={{ pb: 0 }}>
       <HeaderBar role={role} />
-      <ParticipantList role={role} ref={participantRef} />
+      
+      {/* Show different content for players vs GMs during between_rounds */}
+      {phase === 'between_rounds' && role === 'PLAYER' ? (
+        <BetweenRoundsMessage />
+      ) : (
+        <ParticipantList role={role} ref={participantRef} />
+      )}
+      
+      {/* GM reminder during between_rounds - compact panel above ControlBar */}
+      {phase === 'between_rounds' && role === 'GM' && (
+        <Box
+          sx={{
+            bgcolor: 'info.main',
+            color: 'info.contrastText',
+            fontSize: '0.75rem',
+            px: 2,
+            py: 0.5,
+            textAlign: 'left'
+          }}
+        >
+          <strong>End of Round:</strong> Resolve effects, upkeep, bleeding out, and environmental damage.
+        </Box>
+      )}
+      
       <ControlBar role={role} />
     </Stack>
   );
