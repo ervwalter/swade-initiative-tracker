@@ -42,6 +42,18 @@ function inferTokenName(item: Item): string {
 }
 
 /**
+ * Extract the image URL from a token for avatar display
+ */
+function extractTokenImageUrl(item: Item): string | undefined {
+  if (item.type === "IMAGE" && "image" in item && item.image && 
+      typeof item.image === 'object' && item.image !== null && "url" in item.image &&
+      typeof item.image.url === 'string') {
+    return item.image.url;
+  }
+  return undefined;
+}
+
+/**
  * Hook that sets up OBR context menus for tokens
  * Uses undo context for checkpoint capture
  */
@@ -69,12 +81,16 @@ export function useContextMenu() {
         // Infer name from token
         const name = inferTokenName(item);
         
-        console.log(`[SWADE] Adding "${name}" as ${participantType} (token: ${item.id})`);
+        // Extract image URL for avatar
+        const imageUrl = extractTokenImageUrl(item);
+        
+        console.log(`[SWADE] Adding "${name}" as ${participantType} (token: ${item.id}, imageUrl: ${imageUrl})`);
         
         store.dispatch(createParticipant({
           name,
           type: participantType,
-          tokenIds: [item.id]
+          tokenIds: [item.id],
+          imageUrl
         }));
         
         console.log(`[SWADE] Created ${participantType} participant: "${name}"`);

@@ -3,6 +3,13 @@ import { cardsLookup } from "../store/selectors";
 // Shared base style object - created once
 const baseStyle = {
   cursor: 'pointer',
+  fontWeight: 'bold',
+  minWidth: '50px',
+  height: '28px',
+  '& .MuiChip-label': {
+    px: 1, // Restored padding since minWidth is now smaller
+    fontSize: '1.2rem'
+  },
   '&:hover': {
     // Disable default MUI Chip hover effects
     backgroundColor: 'white',

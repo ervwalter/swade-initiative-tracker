@@ -386,14 +386,16 @@ export const swadeSlice = createSlice({
       name: string;
       type: 'PC' | 'NPC' | 'GROUP';
       tokenIds?: string[];
+      imageUrl?: string;
     }>) => {
-      const { name, type, tokenIds = [] } = action.payload;
+      const { name, type, tokenIds = [], imageUrl } = action.payload;
       const id = `p-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
       
       const newParticipant: ParticipantRow = {
         id,
         name,
         tokenIds,
+        imageUrl,
         type,
         inactive: false,
         onHold: false,

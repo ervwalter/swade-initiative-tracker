@@ -9,6 +9,7 @@ import { HeaderBar } from "./components/HeaderBar";
 import { ParticipantList } from "./components/ParticipantList";
 import { ControlBar } from "./components/ControlBar";
 import { BetweenRoundsMessage } from "./components/BetweenRoundsMessage";
+import { InitiativeInactiveMessage } from "./components/InitiativeInactiveMessage";
 import { store } from "./store/store";
 import { useAppSelector } from "./store/hooks";
 import { selectPhase } from "./store/selectors";
@@ -125,8 +126,10 @@ export function InitiativeTracker() {
     <Stack ref={containerRef} sx={{ pb: 0 }}>
       <HeaderBar role={role} />
       
-      {/* Show different content for players vs GMs during between_rounds */}
-      {phase === 'between_rounds' && role === 'PLAYER' ? (
+      {/* Show different content for players vs GMs during special phases */}
+      {phase === 'setup' && role === 'PLAYER' ? (
+        <InitiativeInactiveMessage />
+      ) : phase === 'between_rounds' && role === 'PLAYER' ? (
         <BetweenRoundsMessage />
       ) : (
         <ParticipantList role={role} ref={participantRef} />
@@ -136,11 +139,11 @@ export function InitiativeTracker() {
       {phase === 'between_rounds' && role === 'GM' && (
         <Box
           sx={{
-            bgcolor: 'info.main',
-            color: 'info.contrastText',
+            bgcolor: 'action.hover',
+            color: 'text.primary',
             fontSize: '0.75rem',
             px: 2,
-            py: 0.5,
+            py: 1,
             textAlign: 'left'
           }}
         >

@@ -28,6 +28,7 @@ export interface ParticipantRow {
   id: string;                 // row id (distinct from OBR item id)
   name: string;               // display name
   tokenIds: string[];         // OBR item ids represented by this row (image items preferred)
+  imageUrl?: string;          // URL of token image for avatar display
   type: ParticipantType;
   inactive: boolean;
   onHold: boolean;            // carryover hold into subsequent rounds

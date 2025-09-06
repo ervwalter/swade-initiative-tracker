@@ -3,7 +3,6 @@ import {
   ListItem, 
   ListItemText, 
   Box,
-  Chip,
   Typography,
   useTheme,
   Tooltip,
@@ -25,8 +24,9 @@ import { cardsLookup, selectActiveParticipant, selectPhase, selectPrivacyMode } 
 import { removeParticipant, setHold, loseHold, insertActNow, setInactive, setRevealed, setParticipantType } from "../store/swadeSlice";
 import { RED_JOKER_ID, BLACK_JOKER_ID } from "../utils/cardIds";
 import { getPluginId } from "../getPluginId";
-import { getBaseCardStyle } from "../utils/cardStyles";
 import { useUndo } from "../contexts/UndoContext";
+import { ParticipantAvatar } from "./ParticipantAvatar";
+import { ActionCard } from "./ActionCard";
 
 interface ParticipantRowProps {
   participant: ParticipantRowType;
@@ -128,9 +128,6 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
     }
   };
 
-  const getCardStyle = (cardId: string) => {
-    return getBaseCardStyle(cardId);
-  };
 
 
   return (
@@ -227,7 +224,7 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
         {participant.onHold ? (
           <Box sx={{ 
             width: '50px',
-            minWidth: '60px',
+            minWidth: '50px',
             height: '28px', 
             display: 'flex', 
             alignItems: 'center', 
@@ -236,23 +233,23 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
             <FaHandPaper style={{ fontSize: '1.2rem', color: theme.palette.text.primary, opacity: 1 }} />
           </Box>
         ) : currentCard ? (
-          <Chip 
-            label={currentCard.label}
-            size="small"
+          <ActionCard
+            cardId={participant.currentCardId!}
             onClick={handleCardClick}
             sx={{
-              ...getCardStyle(participant.currentCardId!),
-              fontWeight: 'bold',
-              minWidth: '60px',
-              height: '28px',
               cursor: role === "GM" ? 'pointer' : 'default',
-              '& .MuiChip-label': {
-                px: 1,
-                fontSize: '1.2rem'
-              }
             }}
           />
         ) : null}
+      </Box>
+
+      {/* Avatar on far left */}
+      <Box sx={{ mr: 1.5, display: 'flex', alignItems: 'center' }}>
+        <ParticipantAvatar 
+          imageUrl={participant.imageUrl}
+          name={participant.name}
+          type={participant.type}
+        />
       </Box>
 
       {/* Main content area - leave space for card on right */}

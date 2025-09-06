@@ -7,7 +7,6 @@ import {
   Divider,
   Card,
   CardContent,
-  Chip,
   useTheme,
   IconButton,
   Tooltip
@@ -21,7 +20,7 @@ import { store } from "../store/store";
 import { addCandidateCard, selectKeeperCard, undoLastDraw } from "../store/swadeSlice";
 import { cardsLookup } from "../store/selectors";
 import { useAppSelector } from "../store/hooks";
-import { getBaseCardStyle } from "../utils/cardStyles";
+import { ActionCard } from "./ActionCard";
 
 export function CardChooserModal() {
   const theme = useTheme();
@@ -100,35 +99,16 @@ export function CardChooserModal() {
     await OBR.modal.close(getPluginId("card-chooser"));
   };
 
-  const getCardStyle = (cardId: string) => {
-    const baseStyle = getBaseCardStyle(cardId);
-    
-    return {
-      ...baseStyle,
-      border: 'none' // Remove border since we're using outline
-    };
-  };
-
   const renderCard = (card: any) => {
     const isSelected = card.id === selectedCardId;
     return (
-      <Chip
+      <ActionCard
         key={card.id}
-        label={card.label}
-        size="small"
+        cardId={card.id}
         onClick={() => handleSelectCard(card.id)}
+        selected={isSelected}
         sx={{
-          ...getCardStyle(card.id),
-          fontWeight: 'bold',
-          minWidth: '50px',
-          height: '28px',
-          cursor: 'pointer',
-          outline: isSelected ? `3px solid ${theme.palette.error.main}` : 'none',
-          outlineOffset: '2px',
-          '& .MuiChip-label': {
-            px: 1,
-            fontSize: '1.2rem'
-          }
+          border: 'none' // Remove border since we're using outline
         }}
       />
     );
