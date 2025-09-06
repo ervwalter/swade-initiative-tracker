@@ -2,7 +2,7 @@
 
 A card-based initiative tracker extension for Savage Worlds Adventure Edition (SWADE) games in Owlbear Rodeo. This extension manages initiative using a standard 54-card deck, following SWADE's unique card-based initiative system.
 
-![Example](/docs/header.jpg)
+![Example](/public/docs/header.jpg)
 
 ## Overview
 
