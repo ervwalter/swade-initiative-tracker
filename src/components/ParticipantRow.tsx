@@ -26,6 +26,7 @@ import { removeParticipant, setHold, loseHold, insertActNow, setInactive, setRev
 import { RED_JOKER_ID, BLACK_JOKER_ID } from "../utils/cardIds";
 import { getPluginId } from "../getPluginId";
 import { getBaseCardStyle } from "../utils/cardStyles";
+import { useUndo } from "../contexts/UndoContext";
 
 interface ParticipantRowProps {
   participant: ParticipantRowType;
@@ -41,6 +42,7 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
   const privacyEnabled = useAppSelector(selectPrivacyMode);
   const ref = useRef<HTMLLIElement>(null);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const { captureCheckpoint } = useUndo();
   
   const isActive = activeParticipant?.id === participant.id;
 
@@ -66,36 +68,47 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
   };
 
   const handleRemove = () => {
+    captureCheckpoint(`Remove: ${participant.name}`);
     dispatch(removeParticipant(participant.id));
     handleMenuClose();
   };
 
   const handleChangeType = (newType: 'PC' | 'NPC' | 'GROUP') => {
+    captureCheckpoint(`Change ${participant.name} to ${newType}`);
     dispatch(setParticipantType({ id: participant.id, type: newType }));
     handleMenuClose();
   };
 
   const handleToggleHold = () => {
+    const action = participant.onHold ? 'Remove Hold' : 'Hold';
+    captureCheckpoint(`${action}: ${participant.name}`);
     dispatch(setHold({ id: participant.id, value: !participant.onHold }));
   };
 
   const handleLoseHold = () => {
+    captureCheckpoint(`Lose Hold: ${participant.name}`);
     dispatch(loseHold(participant.id));
   };
 
   const handleActBefore = () => {
+    captureCheckpoint(`Act Now Before: ${participant.name}`);
     dispatch(insertActNow({ id: participant.id, placement: 'before' }));
   };
 
   const handleActAfter = () => {
+    captureCheckpoint(`Act Now After: ${participant.name}`);
     dispatch(insertActNow({ id: participant.id, placement: 'after' }));
   };
 
   const handleToggleRevealed = () => {
+    const action = participant.revealed ? 'Hide' : 'Reveal';
+    captureCheckpoint(`${action}: ${participant.name}`);
     dispatch(setRevealed({ id: participant.id, value: !participant.revealed }));
   };
 
   const handleToggleInactive = () => {
+    const action = participant.inactive ? 'Activate' : 'Deactivate';
+    captureCheckpoint(`${action}: ${participant.name}`);
     dispatch(setInactive({ id: participant.id, value: !participant.inactive }));
   };
 
@@ -104,6 +117,7 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
     if (role !== "GM") return;
     
     if (currentCard || participant.candidateIds.length > 0) {
+      captureCheckpoint(`Manage Cards: ${participant.name}`);
       OBR.modal.open({
         id: getPluginId("card-chooser"),
         url: `/card-chooser?participantId=${participant.id}`,

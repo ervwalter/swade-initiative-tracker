@@ -367,39 +367,23 @@ Based on the implementation plan from `swade-design.md` with 20 incremental, tes
 
 ---
 
-## Phase 18 - Groups/Extras Support
-**Goal**: Allow multiple tokens to share a single initiative card
+## Phase 18 - Local Undo System
+**Goal**: Implement local-only undo functionality with checkpoint capture at user interactions
 
-- [ ] Support multiple `tokenIds` per participant row
-- [ ] Add group creation/editing functionality
-- [ ] Display member count for GROUP type participants
-- [ ] Ensure groups draw only one card total
-- [ ] Handle token removal from groups
-- [ ] Show group icon indicator
-- [ ] **Test**: Groups share single card correctly
+- [ ] Create `src/store/localUndoStore.ts` for local checkpoint storage
+- [ ] Create `src/utils/undo.ts` helper functions
+- [ ] Create `src/components/UndoButton.tsx` with tooltip
+- [ ] Add checkpoints before all user actions that modify state
+- [ ] Add undo button to HeaderBar with keyboard shortcut (Ctrl+Z)
+- [ ] Handle revision increment when restoring states for proper sync
+- [ ] **Test**: Undo works for all actions, syncs properly across iframes
 
-**Design Reference**: Section 3 (Data Model - ParticipantRow.tokenIds)
-**Key Files**: Group management components
-
----
-
-## Phase 19 - Local Undo System
-**Goal**: Implement local-only undo functionality
-
-- [ ] Create `src/state/localState.ts` for local undo management
-- [ ] Set up local component state for undo stack (max 10-20)
-- [ ] Create snapshot function to capture state before changes
-- [ ] Add "Undo" button to HeaderBar
-- [ ] Implement undo action that restores previous state
-- [ ] Ensure undo tracking doesn't get synced to other changes, but when something is undone, the other clients get the updated state
-- [ ] **Test**: Can undo last action, doesn't affect other clients
-
-**Design Reference**: Section 2 (Architecture - Undo), Section 11 (Module Plan)
-**Key Files**: `src/state/localState.ts`, `src/components/UndoButton.tsx`
+**Design Reference**: Explicit checkpoint capture pattern
+**Key Files**: `src/store/localUndoStore.ts`, `src/utils/undo.ts`, `src/components/UndoButton.tsx`
 
 ---
 
-## Phase 20 - Polish
+## Phase 19 - Polish
 **Goal**: Final UX improvements and error handling
 
 - [ ] Add loading states for async operations

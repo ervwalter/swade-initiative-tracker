@@ -8,6 +8,8 @@ import { store, initializeStoreIfNeeded, cleanupStoreSubscriptions } from "./sto
 import { AddParticipantModal } from "./components/AddParticipantModal";
 import { CardChooserModal } from "./components/CardChooserModal";
 import { PluginGate } from "./components/PluginGate";
+import { UndoProvider } from "./contexts/UndoContext";
+import { UndoErrorBoundary } from "./components/UndoErrorBoundary";
 
 function AppContent() {
   const pathname = window.location.pathname;
@@ -24,13 +26,17 @@ function AppContent() {
 
   return (
     <Provider store={store}>
-      {pathname === '/add-participant' ? (
-        <AddParticipantModal />
-      ) : pathname === '/card-chooser' ? (
-        <CardChooserModal />
-      ) : (
-        <InitiativeTracker />
-      )}
+      <UndoErrorBoundary>
+        <UndoProvider>
+          {pathname === '/add-participant' ? (
+            <AddParticipantModal />
+          ) : pathname === '/card-chooser' ? (
+            <CardChooserModal />
+          ) : (
+            <InitiativeTracker />
+          )}
+        </UndoProvider>
+      </UndoErrorBoundary>
     </Provider>
   );
 }

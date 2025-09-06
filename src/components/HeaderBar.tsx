@@ -28,6 +28,8 @@ import { reset, setPrivacy, removeAllNpcsAndExtras } from "../store/swadeSlice";
 import { clearEncounterState } from "../store/roomState";
 import { Phase } from "../store/types";
 import { getPluginId } from "../getPluginId";
+import { useUndo } from "../contexts/UndoContext";
+import { UndoButton } from "./UndoButton";
 
 function getRoundDisplay(round: number, phase: Phase): string {
   if (phase === 'setup') return "Not Active";
@@ -48,6 +50,7 @@ export function HeaderBar({ role }: HeaderBarProps) {
   const phase = useAppSelector(selectPhase);
   const deckCounts = useAppSelector(selectDeckCounts);
   const privacyEnabled = useAppSelector(selectPrivacyMode);
+  const { captureCheckpoint, clearUndoHistory } = useUndo();
   
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const menuOpen = Boolean(menuAnchor);
@@ -56,6 +59,7 @@ export function HeaderBar({ role }: HeaderBarProps) {
   const deckStatus = formatDeckStatus(deckCounts);
 
   const handleAddParticipant = () => {
+    captureCheckpoint('Add Participant');
     OBR.modal.open({
       id: getPluginId("add-participant"),
       url: "/add-participant",
@@ -66,6 +70,7 @@ export function HeaderBar({ role }: HeaderBarProps) {
   };
 
   const handleTogglePrivacy = () => {
+    captureCheckpoint(privacyEnabled ? 'Disable Privacy' : 'Enable Privacy');
     dispatch(setPrivacy(!privacyEnabled));
   };
 
@@ -80,6 +85,9 @@ export function HeaderBar({ role }: HeaderBarProps) {
   const handleFullReset = async () => {
     if (confirm("Are you sure you want to reset the entire initiative tracker? This will remove all participants and restart from scratch.")) {
       try {
+        // Clear undo history first (before state changes)
+        clearUndoHistory();
+        
         // Reset local Redux state
         dispatch(reset());
         
@@ -95,6 +103,7 @@ export function HeaderBar({ role }: HeaderBarProps) {
   };
 
   const handleRemoveAllNpcsAndExtras = () => {
+    captureCheckpoint('Remove All NPCs/Extras');
     dispatch(removeAllNpcsAndExtras());
     handleMenuClose();
   };
@@ -115,6 +124,7 @@ export function HeaderBar({ role }: HeaderBarProps) {
           </Typography>
           {role === "GM" && (
             <Box sx={{ display: 'flex', gap: 0.5 }}>
+              <UndoButton />
               <Tooltip title={privacyEnabled ? "Hide NPCs by default from players" : "Show all combatants to players"}>
                 <IconButton
                   onClick={handleTogglePrivacy}

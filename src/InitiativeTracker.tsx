@@ -12,11 +12,16 @@ import { BetweenRoundsMessage } from "./components/BetweenRoundsMessage";
 import { store } from "./store/store";
 import { useAppSelector } from "./store/hooks";
 import { selectPhase } from "./store/selectors";
-import { setupContextMenu } from "./contextMenu";
+import { useContextMenu } from "./hooks/useContextMenu";
+import { useUndo } from "./contexts/UndoContext";
 
 export function InitiativeTracker() {
   const [role, setRole] = useState<"GM" | "PLAYER">("PLAYER");
   const phase = useAppSelector(selectPhase);
+  const { performUndo, canUndo } = useUndo();
+
+  // Setup context menus with undo integration
+  useContextMenu();
 
   useEffect(() => {
     const handlePlayerChange = (player: Player) => {
@@ -96,12 +101,25 @@ export function InitiativeTracker() {
   }, [role]);
 
 
+  // Add keyboard shortcut for undo (Ctrl+Z or Cmd+Z)
   useEffect(() => {
-    // Setup the new context menu system
-    setupContextMenu();
-  }, []);
-
-
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Only handle undo for GMs
+      if (role !== "GM") return;
+      
+      // Check for Ctrl+Z or Cmd+Z (without Shift for undo, not redo)
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z' && !event.shiftKey) {
+        event.preventDefault();
+        
+        if (canUndo) {
+          performUndo();
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [role]); // Remove canUndo and performUndo from dependencies to prevent frequent re-creation
 
   return (
     <Stack ref={containerRef} sx={{ pb: 0 }}>

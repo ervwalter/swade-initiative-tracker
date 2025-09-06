@@ -17,6 +17,7 @@ import {
   selectPreviousParticipant
 } from "../store/selectors";
 import { dealRound, startRound, endRound, endInitiative, setActiveParticipant } from "../store/swadeSlice";
+import { useUndo } from "../contexts/UndoContext";
 
 interface ControlBarProps {
   role?: "GM" | "PLAYER";
@@ -29,31 +30,38 @@ export function ControlBar({ role }: ControlBarProps) {
   const participantCount = useAppSelector(selectParticipantCount);
   const nextParticipant = useAppSelector(selectNextParticipant);
   const previousParticipant = useAppSelector(selectPreviousParticipant);
+  const { captureCheckpoint } = useUndo();
 
   const handleDealRound = () => {
+    captureCheckpoint(round === 0 ? 'Start Initiative' : 'Deal Cards');
     dispatch(dealRound());
   };
 
   const handleStartRound = () => {
+    captureCheckpoint('Start Round');
     dispatch(startRound());
   };
 
   const handleEndRound = () => {
+    captureCheckpoint('End Round');
     dispatch(endRound());
   };
 
   const handleEndInitiative = () => {
+    captureCheckpoint('End Initiative');
     dispatch(endInitiative());
   };
 
   const handlePrevious = () => {
     if (previousParticipant) {
+      captureCheckpoint(`Previous Turn: ${previousParticipant.name}`);
       dispatch(setActiveParticipant(previousParticipant.id));
     }
   };
 
   const handleNext = () => {
     if (nextParticipant) {
+      captureCheckpoint(`Next Turn: ${nextParticipant.name}`);
       dispatch(setActiveParticipant(nextParticipant.id));
     }
   };
