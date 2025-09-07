@@ -526,6 +526,19 @@ export const swadeSlice = createSlice({
       console.log(`[SWADE] ${participant.name} type changed to: ${type}`);
       incrementRevision(state);
     },
+    
+    renameParticipant: (state, action: PayloadAction<{id: string, name: string}>) => {
+      const { id, name } = action.payload;
+      const participant = state.rows.find(p => p.id === id);
+      if (!participant) return;
+      
+      const trimmedName = name.trim();
+      if (trimmedName) {
+        participant.name = trimmedName;
+        console.log(`[SWADE] Renamed participant to: ${trimmedName}`);
+        incrementRevision(state);
+      }
+    },
 
     // Lose hold due to Shaken/Stunned - clears hold and stays in place
     loseHold: (state, action: PayloadAction<string>) => {
@@ -698,6 +711,7 @@ export const {
   setInactive,
   setRevealed,
   setParticipantType,
+  renameParticipant,
   
   // Turn management
   setActiveParticipant,

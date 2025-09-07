@@ -1,4 +1,4 @@
-import React, { forwardRef } from "react";
+import React, { forwardRef, useState } from "react";
 import { 
   Box, 
   List, 
@@ -17,6 +17,7 @@ interface ParticipantListProps {
 
 export const ParticipantList = forwardRef<HTMLUListElement, ParticipantListProps>(({ role }, ref) => {
   const participants = useAppSelector(state => selectVisibleParticipants(state, role));
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   if (participants.length === 0) {
     return (
@@ -73,6 +74,8 @@ export const ParticipantList = forwardRef<HTMLUListElement, ParticipantListProps
             participant={participant}
             role={role}
             isJokerAtTop={isJokerAtTop}
+            editingId={editingId}
+            setEditingId={setEditingId}
           />
         );
       })}

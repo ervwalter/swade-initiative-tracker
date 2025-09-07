@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { 
   ListItem,
   Box,
@@ -9,7 +9,8 @@ import {
   Menu,
   MenuItem,
   ListItemIcon,
-  Divider
+  Divider,
+  TextField
 } from "@mui/material";
 import DeleteIcon from '@mui/icons-material/Delete';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -20,7 +21,7 @@ import OBR from "@owlbear-rodeo/sdk";
 import { ParticipantRow as ParticipantRowType } from "../store/types";
 import { useAppSelector, useAppDispatch } from "../store/hooks";
 import { cardsLookup, selectActiveParticipant, selectPhase, selectPrivacyMode } from "../store/selectors";
-import { removeParticipant, setHold, loseHold, insertActNow, setInactive, setRevealed, setParticipantType } from "../store/swadeSlice";
+import { removeParticipant, setHold, loseHold, insertActNow, setInactive, setRevealed, setParticipantType, renameParticipant } from "../store/swadeSlice";
 import { RED_JOKER_ID, BLACK_JOKER_ID } from "../utils/cardIds";
 import { getPluginId } from "../getPluginId";
 import { useUndo } from "../hooks/useUndo";
@@ -31,9 +32,11 @@ interface ParticipantRowProps {
   participant: ParticipantRowType;
   role?: "GM" | "PLAYER";
   isJokerAtTop: boolean;
+  editingId: string | null;
+  setEditingId: (id: string | null) => void;
 }
 
-export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantRowProps) => {
+export const ParticipantRow = ({ participant, role, isJokerAtTop, editingId, setEditingId }: ParticipantRowProps) => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const activeParticipant = useAppSelector(selectActiveParticipant);
@@ -41,9 +44,11 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
   const privacyEnabled = useAppSelector(selectPrivacyMode);
   const ref = useRef<HTMLLIElement>(null);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [editedName, setEditedName] = useState(participant.name);
   const { captureCheckpoint } = useUndo();
   
   const isActive = activeParticipant?.id === participant.id;
+  const isEditing = editingId === participant.id;
 
   // Auto-scroll when this participant becomes active
   useEffect(() => {
@@ -54,6 +59,13 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
       });
     }
   }, [isActive]);
+
+  // Update edited name when participant name changes externally
+  useEffect(() => {
+    if (!isEditing) {
+      setEditedName(participant.name);
+    }
+  }, [participant.name, isEditing]);
   const currentCard = participant.currentCardId ? cardsLookup[participant.currentCardId] : null;
   const isJoker = participant.currentCardId === RED_JOKER_ID || participant.currentCardId === BLACK_JOKER_ID;
   const inRound = phase === 'in_round';
@@ -124,6 +136,33 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
         height: 250,
         hideBackdrop: false
       });
+    }
+  };
+
+  const autoSave = useCallback(() => {
+    const trimmedName = editedName.trim();
+    if (trimmedName && trimmedName !== participant.name) {
+      captureCheckpoint(`Rename: ${participant.name} → ${trimmedName}`);
+      dispatch(renameParticipant({ id: participant.id, name: trimmedName }));
+    }
+  }, [editedName, participant.name, participant.id, captureCheckpoint, dispatch]);
+
+
+  const handleNameClick = () => {
+    if (role !== "GM") return;
+    setEditingId(participant.id);
+    setEditedName(participant.name);
+  };
+
+  const handleNameSave = () => {
+    autoSave();
+    setEditingId(null);
+  };
+
+  const handleNameKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handleNameSave();
     }
   };
 
@@ -262,18 +301,67 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop }: ParticipantR
         // 2 = minimal padding (players)
       }}>
         {/* Row 1: Name */}
-        <Box sx={{ mb: 0.5 }}>
-          <Typography 
-            variant="body1" 
-            sx={{ 
-              fontWeight: isActive ? 'bold' : 'normal',
-              textDecoration: participant.inactive ? 'line-through' : 'none',
-              opacity: participant.inactive ? 0.6 : 1,
-              userSelect: 'none'
-            }}
-          >
-            {participant.name}
-          </Typography>
+        <Box sx={{ mb: 0.5, display: 'flex', alignItems: 'center', minHeight: '28px' }}>
+          {isEditing ? (
+            <>
+              <TextField
+                value={editedName}
+                onChange={(e) => setEditedName(e.target.value)}
+                onKeyDown={handleNameKeyDown}
+                onBlur={() => {
+                  autoSave();
+                  setEditingId(null);
+                }}
+                autoFocus
+                variant="standard"
+                size="small"
+                sx={{
+                  flex: 1,
+                  '& .MuiInput-underline:before': { borderBottomColor: 'transparent' },
+                  '& .MuiInput-underline:hover:before': { borderBottomColor: 'primary.main' },
+                  '& .MuiInputBase-input': {
+                    fontWeight: isActive ? 'bold' : 'normal',
+                    fontSize: '1rem',
+                    px: 0.5,
+                    py: 0,
+                    height: '24px',
+                    lineHeight: '24px'
+                  },
+                  '& .MuiInputBase-root': {
+                    mt: 0
+                  }
+                }}
+                onFocus={(e) => e.target.select()}
+              />
+              <IconButton
+                size="small"
+                onClick={handleNameSave}
+                sx={{ ml: 0.5, color: 'success.main' }}
+              >
+                <CheckIcon sx={{ fontSize: '1rem' }} />
+              </IconButton>
+            </>
+          ) : (
+            <Typography 
+              variant="body1" 
+              onClick={handleNameClick}
+              sx={{ 
+                fontWeight: isActive ? 'bold' : 'normal',
+                textDecoration: participant.inactive ? 'line-through' : 'none',
+                opacity: participant.inactive ? 0.6 : 1,
+                userSelect: 'none',
+                cursor: role === "GM" ? 'pointer' : 'default',
+                flex: 1,
+                px: 0.5,
+                borderRadius: 1,
+                '&:hover': role === "GM" ? {
+                  backgroundColor: 'action.hover'
+                } : {}
+              }}
+            >
+              {participant.name}
+            </Typography>
+          )}
         </Box>
 
         {/* Row 2: Action buttons */}

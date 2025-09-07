@@ -2,13 +2,13 @@
 title: Savage Worlds Initiative
 description: An Action Deck initiative tracker for Savage Worlds Adventure Edition (SWADE)
 author: Erv Walter
-image: https://swade-initiative-tracker-9p5qs.ondigitalocean.app/docs/header.jpg
-icon: https://swade-initiative-tracker-9p5qs.ondigitalocean.app/logo.png
+image: https://swade-initiative.ewal.app/docs/header.jpg
+icon: https://swade-initiative.ewal.app/logo.png
 tags:
   - combat
   - savage-worlds
   - initiative
-manifest: https://swade-initiative-tracker-9p5qs.ondigitalocean.app/manifest.json
+manifest: https://swade-initiative.ewal.app/manifest.json
 learn-more: https://github.com/ervwalter/swade-initiative-tracker
 ---
 
