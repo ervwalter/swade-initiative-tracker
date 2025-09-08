@@ -15,6 +15,17 @@ This extension brings SWADE's action card initiative system to Owlbear Rodeo, pr
 
 The design philosophy is to feel like a shared deck at a physical table, removing only the logistical pain while preserving the tactile, analog feel of SWADE combat.
 
+## Add to Owlbear Rodeo
+
+To add this extension to your Owlbear Rodeo room:
+
+1. Open your Owlbear Rodeo room
+2. Click the **Extensions** menu in the settings menu
+3. Press the **Add Custom Extension** button
+4. Enter this manifest URL: `https://swade-initiative.ewal.app/manifest.json`
+5. Click **Add**
+
+
 ## Features
 
 ### Core Initiative System
@@ -55,10 +66,6 @@ The design philosophy is to feel like a shared deck at a physical table, removin
 - **Multi-Client Sync**: All connected clients see the same state
 - **Theme Support**: Adapts to Owlbear Rodeo's light/dark themes
 - **Responsive Design**: Works in both popover and modal views
-
-## Installation
-
-The extension is available in the Owlbear Rodeo extension store. Search for "SWADE Initiative Tracker" and add it to your room.
 
 ## Usage
 
