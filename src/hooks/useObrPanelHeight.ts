@@ -120,20 +120,38 @@ export function useObrPanelHeight(debug = false) {
 
   useEffect(() => {
     const observerTarget = containerRef.current;
-    if (!observerTarget || typeof ResizeObserver === "undefined") {
+    if (!observerTarget) {
       scheduleContentMeasurement();
       return;
     }
 
-    const observer = new ResizeObserver(() => {
-      scheduleContentMeasurement();
-    });
+    let resizeObserver: ResizeObserver | undefined;
+    let mutationObserver: MutationObserver | undefined;
 
-    observer.observe(observerTarget);
+    // Set up ResizeObserver for dimension changes
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(() => {
+        scheduleContentMeasurement();
+      });
+      resizeObserver.observe(observerTarget);
+    }
+
+    // Set up MutationObserver for content changes
+    if (typeof MutationObserver !== "undefined") {
+      mutationObserver = new MutationObserver(() => {
+        scheduleContentMeasurement();
+      });
+      mutationObserver.observe(observerTarget, {
+        childList: true,
+        subtree: true
+      });
+    }
+
     scheduleContentMeasurement();
 
     return () => {
-      observer.disconnect();
+      resizeObserver?.disconnect();
+      mutationObserver?.disconnect();
     };
   }, [containerRef, scheduleContentMeasurement]);
 
