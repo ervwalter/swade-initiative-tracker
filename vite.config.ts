@@ -7,5 +7,8 @@ export default defineConfig({
   server: {
     cors: true
   },
-  assetsInclude: ['**/*.svg']
+  assetsInclude: ['**/*.svg'],
+  build: {
+    sourcemap: true
+  }
 })
