@@ -52,9 +52,9 @@ export function UndoProvider({ children }: UndoProviderProps) {
       // Dispatch the restored state with updated revision
       // This will trigger OBR sync to other iframes
       store.dispatch(setEncounterState(undoState));
-      console.log('[Undo] Restored previous state');
+      console.debug('[Undo] Restored previous state');
     } else {
-      console.log('[Undo] No state to restore');
+      console.debug('[Undo] No state to restore');
     }
   }, [undoStore]);
 

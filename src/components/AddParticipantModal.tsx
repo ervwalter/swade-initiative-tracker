@@ -34,7 +34,7 @@ export function AddParticipantModal() {
         type
       }));
       
-      console.log(`[Modal] Added participant: ${name} (${type})`);
+      console.debug(`[Modal] Added participant: ${name} (${type})`);
       
       // Close modal
       await OBR.modal.close(getPluginId("add-participant"));

@@ -70,14 +70,14 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop, editingId, set
 
   // Watch for modal result changes to trigger undo when cancelled
   useEffect(() => {
-    console.log('[ParticipantRow] modalResult changed to:', modalResult);
+    console.debug('[ParticipantRow] modalResult changed to:', modalResult);
     if (modalResult === 'cancelled') {
-      console.log('[ParticipantRow] Modal was cancelled, triggering undo...');
+      console.debug('[ParticipantRow] Modal was cancelled, triggering undo...');
       performUndo();
-      console.log('[ParticipantRow] Undo completed, clearing modalResult flag');
+      console.debug('[ParticipantRow] Undo completed, clearing modalResult flag');
       dispatch(setModalResult(undefined)); // Clear flag
     } else if (modalResult === 'confirmed') {
-      console.log('[ParticipantRow] Card selection completed normally, clearing modalResult flag');
+      console.debug('[ParticipantRow] Card selection completed normally, clearing modalResult flag');
       dispatch(setModalResult(undefined)); // Clear flag
     }
   }, [modalResult, performUndo, dispatch]);
@@ -144,7 +144,7 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop, editingId, set
 
     if (currentCard || participant.candidateIds.length > 0) {
       // Clear any previous modal result
-      console.log('[ParticipantRow] Clearing modalResult and opening Card Chooser modal');
+      console.debug('[ParticipantRow] Clearing modalResult and opening Card Chooser modal');
       dispatch(setModalResult(undefined));
       captureCheckpoint(`Manage Cards: ${participant.name}`);
 

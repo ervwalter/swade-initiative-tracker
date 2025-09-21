@@ -12,7 +12,7 @@ const initialState: EncounterState = initializeEmptyState();
 const incrementRevision = (state: EncounterState) => {
   const oldRevision = state.revision ?? 0;
   state.revision = oldRevision + 1;
-  console.log('[REVISION] Incremented from', oldRevision, 'to', state.revision);
+  console.debug('[REVISION] Incremented from', oldRevision, 'to', state.revision);
 };
 
 // Helper for auto-revealing participants when they become active
@@ -21,7 +21,7 @@ const autoRevealParticipant = (state: EncounterState, participantId: string | nu
     const participant = state.rows.find(p => p.id === participantId);
     if (participant && !participant.revealed) {
       participant.revealed = true;
-      console.log(`[SWADE] Auto-revealed ${participant.name} on activation`);
+      console.debug(`[SWADE] Auto-revealed ${participant.name} on activation`);
     }
   }
 };
@@ -47,7 +47,7 @@ const dealSingleCard = (state: EncounterState): CardId | null => {
     state.deck.remaining.push(...state.deck.discard);
     state.deck.discard = [];
     fisherYatesShuffle(state.deck.remaining);
-    console.log('[SWADE] Auto-reshuffled deck (was empty)');
+    console.debug('[SWADE] Auto-reshuffled deck (was empty)');
   }
   
   // Deal the card
@@ -132,7 +132,7 @@ export const swadeSlice = createSlice({
       const participantId = action.payload;
       const participant = state.rows.find(p => p.id === participantId);
       if (!participant) {
-        console.log('[SWADE] Cannot add candidate - participant not found');
+        console.warn('[SWADE] Cannot add candidate - participant not found');
         return;
       }
       
@@ -140,7 +140,7 @@ export const swadeSlice = createSlice({
       if (cardId) {
         participant.candidateIds.push(cardId);
         
-        console.log(`[SWADE] Added candidate ${cardId} to ${participant.name}`,
+        console.debug(`[SWADE] Added candidate ${cardId} to ${participant.name}`,
           `(${participant.candidateIds.length} candidates)`);
       } else {
         console.error(`[SWADE] Failed to deal candidate card to ${participant.name}`);
@@ -175,7 +175,7 @@ export const swadeSlice = createSlice({
       // Resort participants to reflect new initiative order
       sortParticipantsByInitiative(state);
       
-      console.log(`[SWADE] ${participant.name} kept ${cardId} - participants resorted`);
+      console.log(`[SWADE Initiative] ${participant.name} kept ${cardId} - participants resorted`);
       incrementRevision(state);
     },
 
@@ -197,7 +197,7 @@ export const swadeSlice = createSlice({
       participant.candidateIds = [];
       participant.drewThisRound = false;
       
-      console.log(`[SWADE] Cleared cards for ${participant.name}`);
+      console.debug(`[SWADE] Cleared cards for ${participant.name}`);
       incrementRevision(state);
     },
 
@@ -216,7 +216,7 @@ export const swadeSlice = createSlice({
           state.deck.remaining.push(lastCardId); // Put back on top of deck
         }
         
-        console.log(`[SWADE] Undid draw of ${lastCardId} for ${participant.name}`);
+        console.debug(`[SWADE] Undid draw of ${lastCardId} for ${participant.name}`);
       }
       
       incrementRevision(state);
@@ -229,10 +229,10 @@ export const swadeSlice = createSlice({
       if (inPlayIndex > -1) {
         state.deck.inPlay.splice(inPlayIndex, 1);
         state.deck.discard.push(cardId);
-        console.log('[SWADE] Discarded:', cardId, 
+        console.debug('[SWADE] Discarded:', cardId, 
           `(${state.deck.inPlay.length} in play, ${state.deck.discard.length} discarded)`);
       } else {
-        console.log('[SWADE] Card not found in play:', cardId);
+        console.warn('[SWADE] Card not found in play:', cardId);
       }
       incrementRevision(state);
     },
@@ -250,7 +250,7 @@ export const swadeSlice = createSlice({
       // Reset reshuffle flag
       state.deck.reshuffleAfterRound = false;
       
-      console.log('[SWADE] Deck shuffled:', state.deck.remaining.length, 'cards');
+      console.log('[SWADE Initiative] Deck shuffled:', state.deck.remaining.length, 'cards');
       incrementRevision(state);
     },
 
@@ -290,7 +290,7 @@ export const swadeSlice = createSlice({
           row.drewThisRound = true;
           cardsDealt++;
           
-          console.log(`[SWADE] Dealt ${cardId} to ${row.name}`);
+          console.debug(`[SWADE] Dealt ${cardId} to ${row.name}`);
         } else {
           console.error(`[SWADE] Failed to deal card to ${row.name} - no cards available`);
         }
@@ -307,7 +307,7 @@ export const swadeSlice = createSlice({
         state.round = wasSetup ? 1 : state.round + 1;
         state.phase = 'cards_dealt';
         
-        console.log(`[SWADE] ${wasSetup ? 'Started' : 'Advanced to'} Round ${state.round} (dealt ${cardsDealt} cards) and reordered array`);
+        console.log(`[SWADE Initiative] ${wasSetup ? 'Started' : 'Advanced to'} Round ${state.round} (dealt ${cardsDealt} cards) and reordered array`);
       } else {
         console.error('[SWADE] Deal round failed - no cards were dealt');
       }
@@ -330,9 +330,9 @@ export const swadeSlice = createSlice({
       if (firstParticipant) {
         state.turn.activeRowId = firstParticipant.id;
         autoRevealParticipant(state, firstParticipant.id);
-        console.log(`[SWADE] Started Round ${state.round} - activated ${firstParticipant.name} (first in initiative order)`);
+        console.log(`[SWADE Initiative] Started Round ${state.round} - activated ${firstParticipant.name} (first in initiative order)`);
       } else {
-        console.log(`[SWADE] Started Round ${state.round} - no participants to activate`);
+        console.log(`[SWADE Initiative] Started Round ${state.round} - no participants to activate`);
       }
       
       incrementRevision(state);
@@ -370,13 +370,13 @@ export const swadeSlice = createSlice({
         fisherYatesShuffle(state.deck.remaining);
         
         state.deck.reshuffleAfterRound = false;
-        console.log('[SWADE] Auto-reshuffled deck after Joker round');
+        console.log('[SWADE Initiative] Auto-reshuffled deck after Joker round');
       }
       
       // Update game state
       state.phase = 'between_rounds';
       
-      console.log(`[SWADE] Round ${state.round} ended`,
+      console.log(`[SWADE Initiative] Round ${state.round} ended`,
         `(${cardsDiscarded} cards discarded)`);
       incrementRevision(state);
     },
@@ -389,7 +389,7 @@ export const swadeSlice = createSlice({
       imageUrl?: string;
     }>) => {
       const { name, type, tokenIds = [], imageUrl } = action.payload;
-      const id = `p-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+      const id = `p-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
       
       const newParticipant: ParticipantRow = {
         id,
@@ -416,7 +416,7 @@ export const swadeSlice = createSlice({
           newParticipant.candidateIds = [cardId];
           newParticipant.drewThisRound = true;
           
-          console.log(`[SWADE] Late joiner ${name} drew ${cardId}`);
+          console.debug(`[SWADE] Late joiner ${name} drew ${cardId}`);
         } else {
           console.error(`[SWADE] Failed to deal card to late joiner ${name}`);
         }
@@ -425,7 +425,7 @@ export const swadeSlice = createSlice({
       // Sort participants after adding
       sortParticipantsByInitiative(state);
       
-      console.log(`[SWADE] Created participant: ${name} (${type}) - ID: ${id}`);
+      console.log(`[SWADE Initiative] Created participant: ${name} (${type}) - ID: ${id}`);
       incrementRevision(state);
     },
 
@@ -433,7 +433,7 @@ export const swadeSlice = createSlice({
       const id = action.payload;
       const participantIndex = state.rows.findIndex(p => p.id === id);
       if (participantIndex === -1) {
-        console.log('[SWADE] Participant not found for removal:', id);
+        console.warn('[SWADE] Participant not found for removal:', id);
         return;
       }
       
@@ -456,7 +456,7 @@ export const swadeSlice = createSlice({
         state.turn.activeRowId = null;
       }
       
-      console.log(`[SWADE] Removed participant: ${participant.name}`);
+      console.log(`[SWADE Initiative] Removed participant: ${participant.name}`);
       incrementRevision(state);
     },
 
@@ -482,7 +482,7 @@ export const swadeSlice = createSlice({
         state.turn.activeRowId = null;
       }
       
-      console.log(`[SWADE] Removed ${participantsToRemove.length} NPCs/Extras`);
+      console.log(`[SWADE Initiative] Removed ${participantsToRemove.length} NPCs/Extras`);
       incrementRevision(state);
     },
 
@@ -493,7 +493,7 @@ export const swadeSlice = createSlice({
       if (!participant) return;
       
       participant.onHold = value;
-      console.log(`[SWADE] ${participant.name} hold: ${value}`);
+      console.log(`[SWADE Initiative] ${participant.name} hold: ${value}`);
       incrementRevision(state);
     },
 
@@ -503,7 +503,7 @@ export const swadeSlice = createSlice({
       if (!participant) return;
       
       participant.inactive = value;
-      console.log(`[SWADE] ${participant.name} inactive: ${value}`);
+      console.log(`[SWADE Initiative] ${participant.name} inactive: ${value}`);
       incrementRevision(state);
     },
 
@@ -513,7 +513,7 @@ export const swadeSlice = createSlice({
       if (!participant) return;
       
       participant.revealed = value;
-      console.log(`[SWADE] ${participant.name} revealed: ${value}`);
+      console.debug(`[SWADE] ${participant.name} revealed: ${value}`);
       incrementRevision(state);
     },
 
@@ -523,7 +523,7 @@ export const swadeSlice = createSlice({
       if (!participant) return;
       
       participant.type = type;
-      console.log(`[SWADE] ${participant.name} type changed to: ${type}`);
+      console.log(`[SWADE Initiative] ${participant.name} type changed to: ${type}`);
       incrementRevision(state);
     },
     
@@ -535,7 +535,7 @@ export const swadeSlice = createSlice({
       const trimmedName = name.trim();
       if (trimmedName) {
         participant.name = trimmedName;
-        console.log(`[SWADE] Renamed participant to: ${trimmedName}`);
+        console.log(`[SWADE Initiative] Renamed participant to: ${trimmedName}`);
         incrementRevision(state);
       }
     },
@@ -554,7 +554,7 @@ export const swadeSlice = createSlice({
       // Don't move them! They just lose their turn where they are.
       // Navigation will handle skipping them since they no longer have onHold=true
       
-      console.log(`[SWADE] ${participant.name} lost hold (Shaken/Stunned) - staying in position`);
+      console.log(`[SWADE Initiative] ${participant.name} lost hold (Shaken/Stunned) - staying in position`);
       incrementRevision(state);
     },
 
@@ -567,7 +567,7 @@ export const swadeSlice = createSlice({
       autoRevealParticipant(state, id);
       
       const activeParticipant = id ? state.rows.find(p => p.id === id) : null;
-      console.log(`[SWADE] Active participant: ${activeParticipant?.name || 'none'}`);
+      console.debug(`[SWADE] Active participant: ${activeParticipant?.name || 'none'}`);
       incrementRevision(state);
     },
 
@@ -585,13 +585,13 @@ export const swadeSlice = createSlice({
       // Find the active participant's position
       const activeId = state.turn.activeRowId;
       if (!activeId) {
-        console.log('[SWADE] No active participant to insert relative to');
+        console.warn('[SWADE] No active participant to insert relative to');
         return;
       }
       
       const activeIndex = state.rows.findIndex(p => p.id === activeId);
       if (activeIndex === -1) {
-        console.log('[SWADE] Active participant not found in array');
+        console.warn('[SWADE] Active participant not found in array');
         return;
       }
       
@@ -622,14 +622,14 @@ export const swadeSlice = createSlice({
       // Always reveal participant when they act now (regardless of placement)
       autoRevealParticipant(state, id);
       
-      console.log(`[SWADE] ${participant.name} acting now (${placement}) - moved in array`);
+      console.log(`[SWADE Initiative] ${participant.name} acting now (${placement}) - moved in array`);
       incrementRevision(state);
     },
 
     // Settings
     setPrivacy: (state, action: PayloadAction<boolean>) => {
       state.settings.hideNpcFromPlayers = action.payload;
-      console.log(`[SWADE] Privacy: ${action.payload ? 'enabled' : 'disabled'}`);
+      console.log(`[SWADE Initiative] Privacy: ${action.payload ? 'enabled' : 'disabled'}`);
       incrementRevision(state);
     },
 
@@ -672,17 +672,17 @@ export const swadeSlice = createSlice({
       // Clear active participant
       state.turn.activeRowId = null;
       
-      console.log('[SWADE] Initiative ended - participants kept, deck/round reset');
+      console.log('[SWADE Initiative] Initiative ended - participants kept, deck/round reset');
       incrementRevision(state);
     },
 
     reset: () => {
-      console.log('[SWADE] State reset to initial');
+      console.log('[SWADE Initiative] State reset to initial');
       return initializeEmptyState();
     },
 
-    setEncounterState: (state, action: PayloadAction<EncounterState>) => {
-      console.log('[SWADE] State synced from OBR room metadata');
+    setEncounterState: (_state, action: PayloadAction<EncounterState>) => {
+      console.debug('[SWADE] State synced from OBR room metadata');
       return action.payload;
     },
 

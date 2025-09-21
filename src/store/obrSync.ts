@@ -36,12 +36,12 @@ export function setupOBRSync(store: Store<RootState>): Unsubscribe {
       const currentOBRRevision = currentOBRState?.revision ?? 0;
       
       if (currentOBRRevision >= revision) {
-        console.log('[OBR] Skipping sync - OBR has newer/same revision:', currentOBRRevision, 'vs', revision);
+        console.debug('[OBR] Skipping sync - OBR has newer/same revision:', currentOBRRevision, 'vs', revision);
         return;
       }
       
       await writeEncounterState(state);
-      console.log('[OBR] Synced to room metadata:', {
+      console.debug('[OBR] Synced to room metadata:', {
         round: state.round,
         phase: state.phase,
         participants: state.rows.length,
@@ -67,7 +67,7 @@ export function setupOBRSync(store: Store<RootState>): Unsubscribe {
     previousState = currentState;
   });
 
-  console.log('[OBR] State subscription sync configured');
+  console.debug('[OBR] State subscription sync configured');
   return unsubscribe;
 }
 
@@ -75,11 +75,11 @@ export function setupOBRSync(store: Store<RootState>): Unsubscribe {
 export function subscribeToOBRChanges(store: Store<RootState>): () => void {
   const PLUGIN_STATE_KEY = getPluginId('state');
   
-  console.log('[OBR] Setting up room metadata change subscription...');
+  console.debug('[OBR] Setting up room metadata change subscription...');
   
   // Load initial state
   getOrInitializeState().then(state => {
-    console.log('[OBR] Initial state loaded:', {
+    console.debug('[OBR] Initial state loaded:', {
       round: state.round,
       phase: state.phase,
       participantCount: state.rows.length,
@@ -96,7 +96,7 @@ export function subscribeToOBRChanges(store: Store<RootState>): () => void {
     const stateData = metadata[PLUGIN_STATE_KEY];
     
     if (!stateData) {
-      console.log('[OBR] No state data in room metadata - metadata was cleared, resetting to empty state');
+      console.debug('[OBR] No state data in room metadata - metadata was cleared, resetting to empty state');
       // When metadata is cleared (e.g., by GM reset), initialize fresh state locally
       // Don't write to OBR metadata here to avoid infinite loop
       const emptyState = initializeEmptyState();
@@ -119,13 +119,13 @@ export function subscribeToOBRChanges(store: Store<RootState>): () => void {
         const currentRevision = store.getState().swade.revision ?? 0;
         
         if (incomingRevision <= currentRevision) {
-          console.log('[OBR] Ignoring stale/duplicate update (incoming:', incomingRevision, 'current:', currentRevision, ')');
+          console.debug('[OBR] Ignoring stale/duplicate update (incoming:', incomingRevision, 'current:', currentRevision, ')');
           return;
         }
         
         // Process the external update
         store.dispatch(setEncounterState(migratedState));
-        console.log('[OBR] External state update received and applied');
+        console.debug('[OBR] External state update received and applied');
         
       } catch (error) {
         console.error('[OBR] Failed to process external state update:', error);
@@ -136,6 +136,6 @@ export function subscribeToOBRChanges(store: Store<RootState>): () => void {
     }
   });
 
-  console.log('[OBR] Room metadata change subscription active');
+  console.debug('[OBR] Room metadata change subscription active');
   return unsubscribe;
 }

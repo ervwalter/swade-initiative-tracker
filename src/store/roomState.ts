@@ -56,8 +56,8 @@ export async function readEncounterState(): Promise<EncounterState | null> {
     if (isValidStateStructure(stateData)) {
       // Apply any necessary migrations
       const migratedState = migrateState(stateData);
-      console.log('[OBR] Raw state revision:', (stateData as unknown as EncounterState).revision ?? 'undefined');
-      console.log('[OBR] Migrated state revision:', migratedState.revision);
+      console.debug('[OBR] Raw state revision:', (stateData as unknown as EncounterState).revision ?? 'undefined');
+      console.debug('[OBR] Migrated state revision:', migratedState.revision);
       return migratedState;
     }
 
@@ -86,7 +86,7 @@ export async function clearEncounterState(): Promise<void> {
     await OBR.room.setMetadata({
       [PLUGIN_STATE_KEY]: undefined
     });
-    console.log('[OBR] Cleared encounter state from room metadata');
+    console.debug('[OBR] Cleared encounter state from room metadata');
   } catch (error) {
     console.error('Failed to clear encounter state:', error);
     throw error;
@@ -126,11 +126,11 @@ export async function getOrInitializeState(): Promise<EncounterState> {
   let state = await readEncounterState();
   
   if (!state) {
-    console.log('[OBR] No existing state found, creating new state');
+    console.debug('[OBR] No existing state found, creating new state');
     state = initializeEmptyState();
     await writeEncounterState(state);
   } else {
-    console.log('[OBR] Found existing state with revision:', state.revision);
+    console.debug('[OBR] Found existing state with revision:', state.revision);
   }
 
   return state;

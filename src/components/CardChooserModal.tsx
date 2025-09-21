@@ -86,7 +86,7 @@ export function CardChooserModal() {
 
     try {
       // Mark that the modal was confirmed before making changes
-      console.log('[CardChooser] Setting modalResult to confirmed');
+      console.debug('[CardChooser] Setting modalResult to confirmed');
       store.dispatch(setModalResult('confirmed'));
 
       store.dispatch(selectKeeperCard({
@@ -94,7 +94,7 @@ export function CardChooserModal() {
         cardId: selectedCardId
       }));
 
-      console.log(`[CardChooser] Selected ${selectedCardId} for ${participant.name}`);
+      console.debug(`[CardChooser] Selected ${selectedCardId} for ${participant.name}`);
 
       // Close modal
       await OBR.modal.close(getPluginId("card-chooser"));
@@ -108,9 +108,9 @@ export function CardChooserModal() {
 
   const handleCancel = async () => {
     // Mark that the modal was cancelled
-    console.log('[CardChooser] Setting modalResult to cancelled');
+    console.debug('[CardChooser] Setting modalResult to cancelled');
     store.dispatch(setModalResult('cancelled'));
-    console.log('[CardChooser] Closing modal');
+    console.debug('[CardChooser] Closing modal');
     await OBR.modal.close(getPluginId("card-chooser"));
   };
 

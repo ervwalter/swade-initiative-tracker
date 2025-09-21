@@ -22,7 +22,7 @@ export function useObrPanelHeight(debug = false) {
   const log = useCallback(
     (...args: unknown[]) => {
       if (debug) {
-        console.log("[Resize]", ...args);
+        console.debug("[Resize]", ...args);
       }
     },
     [debug]

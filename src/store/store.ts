@@ -30,7 +30,7 @@ export function initializeStoreIfNeeded() {
     return;
   }
   
-  console.log('[Store] Initializing with OBR state...');
+  console.debug('[Store] Initializing with OBR state...');
   cleanupSubscription = subscribeToOBRChanges(store);
   storeInitialized = true;
 }
@@ -50,5 +50,5 @@ export type AppDispatch = typeof store.dispatch;
 // For debugging in development
 if (import.meta.env.DEV) {
   (window as typeof window & { __REDUX_STORE__: typeof store }).__REDUX_STORE__ = store;
-  console.log('[RTK] Store configured with middleware');
+  console.debug('[RTK] Store configured with middleware');
 }

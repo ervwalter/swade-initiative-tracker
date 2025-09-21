@@ -33,7 +33,7 @@ export class LocalUndoStore {
       this.currentRoomId = roomId;
       this.loadCheckpointsFromStorage();
       this.scheduleCleanup();
-      console.log(`[Undo] Initialized for room: ${this.currentRoomId}`);
+      console.debug(`[Undo] Initialized for room: ${this.currentRoomId}`);
     } catch (error) {
       console.warn('[Undo] Could not initialize room storage:', error);
       this.currentRoomId = 'default';
@@ -100,7 +100,7 @@ export class LocalUndoStore {
       }
       
       if (keysToRemove.length > 0) {
-        console.log(`[Undo] Cleaned up ${keysToRemove.length} old room entries`);
+        console.debug(`[Undo] Cleaned up ${keysToRemove.length} old room entries`);
       }
     } catch (error) {
       console.warn('[Undo] Error during cleanup:', error);
@@ -126,7 +126,7 @@ export class LocalUndoStore {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
           this.checkpoints = parsed;
-          console.log(`[Undo] Loaded ${this.checkpoints.length} checkpoints from localStorage for room ${this.currentRoomId}`);
+          console.debug(`[Undo] Loaded ${this.checkpoints.length} checkpoints from localStorage for room ${this.currentRoomId}`);
         }
       }
     } catch (error) {
@@ -159,7 +159,7 @@ export class LocalUndoStore {
           try {
             this.checkpoints = this.checkpoints.slice(-maxCount);
             localStorage.setItem(this.getStorageKey(), JSON.stringify(this.checkpoints));
-            console.log(`[Undo] Reduced to ${maxCount} checkpoints to fit storage`);
+            console.debug(`[Undo] Reduced to ${maxCount} checkpoints to fit storage`);
             // Don't permanently reduce maxCheckpoints - let it recover when storage is available
             return;
           } catch (retryError) {
@@ -186,7 +186,7 @@ export class LocalUndoStore {
     
     // Skip if no changes (revision unchanged)
     if (latestCheckpoint && latestCheckpoint.state.revision === state.revision) {
-      console.log('[Undo] Skipping checkpoint - no state changes');
+      console.debug('[Undo] Skipping checkpoint - no state changes');
       return;
     }
 
@@ -195,7 +195,7 @@ export class LocalUndoStore {
     if (latestCheckpoint && 
         latestCheckpoint.description === description &&
         (now - latestCheckpoint.timestamp) < 50) {
-      console.log('[Undo] Skipping checkpoint - rapid duplicate');
+      console.debug('[Undo] Skipping checkpoint - rapid duplicate');
       return;
     }
     
@@ -216,7 +216,7 @@ export class LocalUndoStore {
     // Save to localStorage
     this.saveCheckpointsToStorage();
     
-    console.log(`[Undo] Captured checkpoint: ${description} (revision ${state.revision})`);
+    console.debug(`[Undo] Captured checkpoint: ${description} (revision ${state.revision})`);
   }
 
   /**
@@ -240,7 +240,7 @@ export class LocalUndoStore {
     // CRITICAL: Update revision to be newer than current for sync system
     undoState.revision = currentRevision + 1;
     
-    console.log(`[Undo] Restoring to: ${checkpointToRestore.description} (updating revision from ${checkpointToRestore.state.revision} to ${undoState.revision})`);
+    console.debug(`[Undo] Restoring to: ${checkpointToRestore.description} (updating revision from ${checkpointToRestore.state.revision} to ${undoState.revision})`);
     
     // Save updated checkpoint stack to localStorage
     this.saveCheckpointsToStorage();
@@ -275,7 +275,7 @@ export class LocalUndoStore {
   clearCheckpoints(): void {
     this.checkpoints = [];
     this.saveCheckpointsToStorage();
-    console.log('[Undo] Cleared all checkpoints');
+    console.debug('[Undo] Cleared all checkpoints');
   }
 
   /**

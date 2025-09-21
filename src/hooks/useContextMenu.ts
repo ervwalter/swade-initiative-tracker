@@ -65,7 +65,7 @@ export function useContextMenu() {
      * Add items to initiative with specified type
      */
     function addToInitiativeAsType(items: Item[], participantType: ParticipantType): void {
-      console.log(`[SWADE] Adding ${items.length} token(s) to initiative as ${participantType}`);
+      console.debug(`[SWADE] Adding ${items.length} token(s) to initiative as ${participantType}`);
       
       // Capture checkpoint before adding any tokens
       const description = items.length === 1 
@@ -75,8 +75,8 @@ export function useContextMenu() {
       
       for (const item of items) {
         // Log full item data for metadata inspection
-        console.log('[SWADE] Full item data:', item);
-        console.log('[SWADE] Item metadata:', item.metadata);
+        console.debug('[SWADE] Full item data:', item);
+        console.debug('[SWADE] Item metadata:', item.metadata);
         
         // Infer name from token
         const name = inferTokenName(item);
@@ -84,7 +84,7 @@ export function useContextMenu() {
         // Extract image URL for avatar
         const imageUrl = extractTokenImageUrl(item);
         
-        console.log(`[SWADE] Adding "${name}" as ${participantType} (token: ${item.id}, imageUrl: ${imageUrl})`);
+        console.debug(`[SWADE] Adding "${name}" as ${participantType} (token: ${item.id}, imageUrl: ${imageUrl})`);
         
         store.dispatch(createParticipant({
           name,
@@ -93,7 +93,7 @@ export function useContextMenu() {
           imageUrl
         }));
         
-        console.log(`[SWADE] Created ${participantType} participant: "${name}"`);
+        console.debug(`[SWADE] Created ${participantType} participant: "${name}"`);
       }
     }
 
@@ -214,7 +214,7 @@ export function useContextMenu() {
       },
     });
     
-    console.log('[SWADE] Context menu setup complete');
+    console.debug('[SWADE] Context menu setup complete');
 
     // Cleanup function - if OBR supports removing context menus
     return () => {
