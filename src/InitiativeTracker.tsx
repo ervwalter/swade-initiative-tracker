@@ -34,7 +34,7 @@ export function InitiativeTracker() {
   // State initialization is now handled by the OBR sync system automatically
   // No need for manual initialization here - the sync system will load and initialize state
 
-  const { containerRef, participantListRef } = useObrPanelHeight();
+  const { containerRef, participantListRef, maxHeight } = useObrPanelHeight();
 
   // Add keyboard shortcut for undo (Ctrl+Z or Cmd+Z)
   useEffect(() => {
@@ -61,7 +61,7 @@ export function InitiativeTracker() {
   }, [role, canUndo, performUndo]);
 
   return (
-    <Stack ref={containerRef} sx={{ pb: 0 }}>
+    <Stack ref={containerRef} sx={{ pb: 0, maxHeight }}>
       <HeaderBar role={role} />
 
       {/* Show different content for players vs GMs during special phases */}

@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import OBR from "@owlbear-rodeo/sdk";
+import { useAppSelector } from "../store/hooks";
 
 const HEIGHT_EPSILON = 1; // px
 
@@ -13,6 +14,10 @@ export function useObrPanelHeight(debug = false) {
   const lastRequestedHeight = useRef<number | null>(null);
   const lastViewportHeight = useRef<number>(0);
   const measurementFrame = useRef<number | null>(null);
+  const [maxHeight, setMaxHeight] = useState<number | undefined>(undefined);
+
+  // Subscribe to all Redux state changes
+  const state = useAppSelector(state => state);
 
   const log = useCallback(
     (...args: unknown[]) => {
@@ -100,20 +105,36 @@ export function useObrPanelHeight(debug = false) {
       return;
     }
 
+    const participantEl = participantListRef.current;
     const viewportHeight = Math.round(window.innerHeight);
-    if (Math.abs(viewportHeight - lastViewportHeight.current) > HEIGHT_EPSILON) {
-      containerEl.style.maxHeight = `${viewportHeight}px`;
-      lastViewportHeight.current = viewportHeight;
-      log(`Applied viewport constraint ${viewportHeight}`);
+
+    if (participantEl) {
+      // Only set max height when we have a scrollable list
+      if (Math.abs(viewportHeight - lastViewportHeight.current) > HEIGHT_EPSILON) {
+        setMaxHeight(viewportHeight);
+        lastViewportHeight.current = viewportHeight;
+        log(`Applied viewport constraint ${viewportHeight}`);
+      }
+    } else {
+      // No list, remove height constraint
+      setMaxHeight(undefined);
+      if (lastViewportHeight.current !== 0) {
+        lastViewportHeight.current = 0;
+        log(`Removed viewport constraint (no participant list)`);
+      }
     }
 
     scheduleContentMeasurement();
-  }, [containerRef, log, scheduleContentMeasurement]);
+  }, [log, scheduleContentMeasurement]);
 
+  // Trigger on Redux state changes
   useEffect(() => {
     applyViewportConstraint();
-    const handleResize = () => applyViewportConstraint();
+  }, [state, applyViewportConstraint]);
 
+  // Trigger on window resize (separate effect, different lifecycle)
+  useEffect(() => {
+    const handleResize = () => applyViewportConstraint();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [applyViewportConstraint]);
@@ -172,5 +193,5 @@ export function useObrPanelHeight(debug = false) {
       measurementFrame.current = null;
     };
   }, []);
-  return { containerRef, participantListRef };
+  return { containerRef, participantListRef, maxHeight };
 }
