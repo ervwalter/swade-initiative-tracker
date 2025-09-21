@@ -1,5 +1,5 @@
-// Error Boundary for Undo System
-// Provides graceful fallback when undo context is used incorrectly
+// Application Error Boundary
+// Provides graceful fallback for all application errors
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Box, Typography, Alert } from '@mui/material';
@@ -13,7 +13,7 @@ interface State {
   error: Error | null;
 }
 
-export class UndoErrorBoundary extends Component<Props, State> {
+export class AppErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
     error: null
@@ -25,7 +25,7 @@ export class UndoErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('UndoErrorBoundary caught an error:', error, errorInfo);
+    console.error('AppErrorBoundary caught an error:', error, errorInfo);
   }
 
   public render() {
@@ -36,7 +36,7 @@ export class UndoErrorBoundary extends Component<Props, State> {
           <Box sx={{ p: 2 }}>
             <Alert severity="error">
               <Typography variant="h6" gutterBottom>
-                Undo System Configuration Error
+                Configuration Error
               </Typography>
               <Typography variant="body2">
                 The undo functionality requires proper initialization. Please refresh the page.
@@ -54,7 +54,7 @@ export class UndoErrorBoundary extends Component<Props, State> {
               Something went wrong
             </Typography>
             <Typography variant="body2">
-              An error occurred in the undo system. Please refresh the page.
+              An unexpected error occurred. Please refresh the page to continue.
             </Typography>
           </Alert>
         </Box>

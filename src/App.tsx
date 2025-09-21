@@ -6,7 +6,7 @@ import { AddParticipantModal } from "./components/AddParticipantModal";
 import { CardChooserModal } from "./components/CardChooserModal";
 import { PluginGate } from "./components/PluginGate";
 import { UndoProvider } from "./contexts/UndoContext";
-import { UndoErrorBoundary } from "./components/UndoErrorBoundary";
+import { AppErrorBoundary } from "./components/AppErrorBoundary";
 
 function AppContent() {
   const pathname = window.location.pathname;
@@ -23,7 +23,7 @@ function AppContent() {
 
   return (
     <Provider store={store}>
-      <UndoErrorBoundary>
+      <AppErrorBoundary>
         <UndoProvider>
           {pathname === '/add-participant' ? (
             <AddParticipantModal />
@@ -33,7 +33,7 @@ function AppContent() {
             <InitiativeTracker />
           )}
         </UndoProvider>
-      </UndoErrorBoundary>
+      </AppErrorBoundary>
     </Provider>
   );
 }
