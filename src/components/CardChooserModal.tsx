@@ -13,7 +13,7 @@ import OBR from "@owlbear-rodeo/sdk";
 
 import { getPluginId } from "../getPluginId";
 import { store } from "../store/store";
-import { addCandidateCard, selectKeeperCard, undoLastDraw } from "../store/swadeSlice";
+import { addCandidateCard, selectKeeperCard, undoLastDraw, setModalResult } from "../store/swadeSlice";
 import { cardsLookup } from "../store/selectors";
 import { useAppSelector } from "../store/hooks";
 import { ParticipantRow, Card } from "../store/types";
@@ -42,6 +42,18 @@ export function CardChooserModal() {
     }
   }, [participant?.currentCardId, selectedCardId]);
 
+  // Handle Escape key to cancel
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !isSubmitting) {
+        handleCancel();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSubmitting]);
+
   // Note: Modal has fixed dimensions unlike popovers
 
   if (!participant) {
@@ -69,20 +81,24 @@ export function CardChooserModal() {
 
   const handleConfirmSelection = async () => {
     if (!selectedCardId) return;
-    
+
     setIsSubmitting(true);
-    
+
     try {
+      // Mark that the modal was confirmed before making changes
+      console.log('[CardChooser] Setting modalResult to confirmed');
+      store.dispatch(setModalResult('confirmed'));
+
       store.dispatch(selectKeeperCard({
         participantId: participant.id,
         cardId: selectedCardId
       }));
-      
+
       console.log(`[CardChooser] Selected ${selectedCardId} for ${participant.name}`);
-      
+
       // Close modal
       await OBR.modal.close(getPluginId("card-chooser"));
-      
+
     } catch (error) {
       console.error('[CardChooser] Failed to select card:', error);
     } finally {
@@ -91,6 +107,10 @@ export function CardChooserModal() {
   };
 
   const handleCancel = async () => {
+    // Mark that the modal was cancelled
+    console.log('[CardChooser] Setting modalResult to cancelled');
+    store.dispatch(setModalResult('cancelled'));
+    console.log('[CardChooser] Closing modal');
     await OBR.modal.close(getPluginId("card-chooser"));
   };
 

@@ -52,11 +52,12 @@ export interface EncounterState {
   phase: Phase;                // 'setup' before first round; 'between_rounds' after End Round; 'in_round' during a round
   deck: Deck;
   rows: ParticipantRow[];      // Array in display order (no more dynamic sorting)
-  turn: { 
-    activeRowId: string | null; 
+  turn: {
+    activeRowId: string | null;
   };
   settings: Settings;
   revision: number;           // Increments with each state change, for sync loop detection
+  modalResult?: 'confirmed' | 'cancelled'; // Track if modal was properly closed or dismissed
 }
 
 // Local component state (NOT synced in metadata)

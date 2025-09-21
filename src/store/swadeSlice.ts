@@ -633,6 +633,11 @@ export const swadeSlice = createSlice({
       incrementRevision(state);
     },
 
+    setModalResult: (state, action: PayloadAction<'confirmed' | 'cancelled' | undefined>) => {
+      state.modalResult = action.payload;
+      incrementRevision(state); // Need revision increment for cross-frame sync
+    },
+
     // System operations
     endInitiative: (state) => {
       // Keep participants but clear their card states and reset privacy
@@ -719,6 +724,7 @@ export const {
   
   // Settings
   setPrivacy,
+  setModalResult,
   
   // System
   endInitiative,
