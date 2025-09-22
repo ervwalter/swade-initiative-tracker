@@ -21,7 +21,7 @@ import OBR from "@owlbear-rodeo/sdk";
 import { ParticipantRow as ParticipantRowType } from "../store/types";
 import { useAppSelector, useAppDispatch } from "../store/hooks";
 import { cardsLookup, selectActiveParticipant, selectPhase, selectPrivacyMode } from "../store/selectors";
-import { removeParticipant, setHold, loseHold, insertActNow, setInactive, setRevealed, setParticipantType, renameParticipant, setModalResult } from "../store/swadeSlice";
+import { removeParticipant, setHold, loseHold, insertActNow, setInactive, setRevealed, setParticipantType, renameParticipant } from "../store/swadeSlice";
 import { RED_JOKER_ID, BLACK_JOKER_ID } from "../utils/cardIds";
 import { getPluginId } from "../getPluginId";
 import { useUndo } from "../hooks/useUndo";
@@ -42,11 +42,10 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop, editingId, set
   const activeParticipant = useAppSelector(selectActiveParticipant);
   const phase = useAppSelector(selectPhase);
   const privacyEnabled = useAppSelector(selectPrivacyMode);
-  const modalResult = useAppSelector(state => state.swade.modalResult);
   const ref = useRef<HTMLLIElement>(null);
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [editedName, setEditedName] = useState(participant.name);
-  const { captureCheckpoint, performUndo } = useUndo();
+  const { captureCheckpoint } = useUndo();
   
   const isActive = activeParticipant?.id === participant.id;
   const isEditing = editingId === participant.id;
@@ -68,19 +67,6 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop, editingId, set
     }
   }, [participant.name, isEditing]);
 
-  // Watch for modal result changes to trigger undo when cancelled
-  useEffect(() => {
-    console.debug('[ParticipantRow] modalResult changed to:', modalResult);
-    if (modalResult === 'cancelled') {
-      console.debug('[ParticipantRow] Modal was cancelled, triggering undo...');
-      performUndo();
-      console.debug('[ParticipantRow] Undo completed, clearing modalResult flag');
-      dispatch(setModalResult(undefined)); // Clear flag
-    } else if (modalResult === 'confirmed') {
-      console.debug('[ParticipantRow] Card selection completed normally, clearing modalResult flag');
-      dispatch(setModalResult(undefined)); // Clear flag
-    }
-  }, [modalResult, performUndo, dispatch]);
   const currentCard = participant.currentCardId ? cardsLookup[participant.currentCardId] : null;
   const isJoker = participant.currentCardId === RED_JOKER_ID || participant.currentCardId === BLACK_JOKER_ID;
   const inRound = phase === 'in_round';
@@ -143,9 +129,6 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop, editingId, set
     if (role !== "GM") return;
 
     if (currentCard || participant.candidateIds.length > 0) {
-      // Clear any previous modal result
-      console.debug('[ParticipantRow] Clearing modalResult and opening Card Chooser modal');
-      dispatch(setModalResult(undefined));
       captureCheckpoint(`Manage Cards: ${participant.name}`);
 
       OBR.modal.open({

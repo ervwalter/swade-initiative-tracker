@@ -57,7 +57,6 @@ export interface EncounterState {
   };
   settings: Settings;
   revision: number;           // Increments with each state change, for sync loop detection
-  modalResult?: 'confirmed' | 'cancelled'; // Track if modal was properly closed or dismissed
 }
 
 // Local component state (NOT synced in metadata)
