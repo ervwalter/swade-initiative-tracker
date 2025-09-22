@@ -12,13 +12,11 @@ import { InitiativeInactiveMessage } from "./components/InitiativeInactiveMessag
 import { useAppSelector } from "./store/hooks";
 import { selectPhase } from "./store/selectors";
 import { useContextMenu } from "./hooks/useContextMenu";
-import { useUndo } from "./hooks/useUndo";
 import { useObrPanelHeight } from "./hooks/useObrPanelHeight";
 
 export function InitiativeTracker() {
   const [role, setRole] = useState<"GM" | "PLAYER">("PLAYER");
   const phase = useAppSelector(selectPhase);
-  const { performUndo, canUndo } = useUndo();
 
   // Setup context menus with undo integration
   useContextMenu();
@@ -35,30 +33,6 @@ export function InitiativeTracker() {
   // No need for manual initialization here - the sync system will load and initialize state
 
   const { containerRef, participantListRef, maxHeight } = useObrPanelHeight();
-
-  // Add keyboard shortcut for undo (Ctrl+Z or Cmd+Z)
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Only handle undo for GMs
-      if (role !== "GM") return;
-
-      // Check for Ctrl+Z or Cmd+Z (without Shift for undo, not redo)
-      if (
-        (event.ctrlKey || event.metaKey) &&
-        event.key.toLowerCase() === "z" &&
-        !event.shiftKey
-      ) {
-        event.preventDefault();
-
-        if (canUndo) {
-          performUndo();
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [role, canUndo, performUndo]);
 
   return (
     <Stack ref={containerRef} sx={{ pb: 0, maxHeight }}>
