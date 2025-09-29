@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Stack, Box } from "@mui/material";
+import { Stack } from "@mui/material";
 
 import OBR, { Player } from "@owlbear-rodeo/sdk";
 
@@ -9,6 +9,7 @@ import { ParticipantList } from "./components/ParticipantList";
 import { ControlBar } from "./components/ControlBar";
 import { BetweenRoundsMessage } from "./components/BetweenRoundsMessage";
 import { InitiativeInactiveMessage } from "./components/InitiativeInactiveMessage";
+import { PhaseReminder } from "./components/PhaseReminder";
 import { useAppSelector } from "./store/hooks";
 import { selectPhase } from "./store/selectors";
 import { useContextMenu } from "./hooks/useContextMenu";
@@ -47,21 +48,22 @@ export function InitiativeTracker() {
         <ParticipantList role={role} ref={participantListRef} />
       )}
 
-      {/* GM reminder during between_rounds - compact panel above ControlBar */}
+      {/* Phase-specific reminders - compact panels above ControlBar */}
       {phase === "between_rounds" && role === "GM" && (
-        <Box
-          sx={{
-            bgcolor: "action.hover",
-            color: "text.primary",
-            fontSize: "0.75rem",
-            px: 2,
-            py: 1,
-            textAlign: "left",
-          }}
-        >
-          <strong>End of Round:</strong> Resolve effects, upkeep, bleeding out,
-          and environmental damage.
-        </Box>
+        <PhaseReminder 
+          title="End of Round"
+          description="Resolve effects, upkeep, bleeding out, and environmental damage."
+        />
+      )}
+      
+      {phase === "cards_dealt" && (
+        <PhaseReminder
+          title="Cards Dealt"
+          description={role === "GM" 
+            ? "Make card adjustments now (Bennies, Edges, Hindrances, etc.)"
+            : "Request card adjustments now (Bennies, Edges, Hindrances, etc.)"
+          }
+        />
       )}
 
       <ControlBar role={role} />
