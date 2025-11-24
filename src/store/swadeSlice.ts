@@ -8,11 +8,43 @@ import { getCardScore } from "../utils/cardScoring";
 
 const initialState: EncounterState = initializeEmptyState();
 
+// Helper to log state snapshot
+const logState = (state: EncounterState) => {
+  const { deck, rows, turn, round, phase } = state;
+  const snapshot = {
+    round,
+    phase,
+    inPlay: deck.inPlay.length,
+    discarded: deck.discard.length,
+    remaining: deck.remaining.length,
+    reshuffleAfterRound: deck.reshuffleAfterRound,
+    participants: rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      type: row.type,
+      card: row.currentCardId ?? null,
+      candidates: row.candidateIds,
+      inactive: row.inactive,
+      onHold: row.onHold,
+      revealed: row.revealed,
+    })),
+    turn,
+    deck: {
+      remaining: deck.remaining,
+      inPlay: deck.inPlay,
+      discard: deck.discard,
+    },
+    discard: deck.discard,
+  };
+  console.log('[STATE]', snapshot);
+};
+
 // Helper to increment revision on state changes (for sync loop detection)
 const incrementRevision = (state: EncounterState) => {
   const oldRevision = state.revision ?? 0;
   state.revision = oldRevision + 1;
   console.debug('[REVISION] Incremented from', oldRevision, 'to', state.revision);
+  logState(state);
 };
 
 // Helper for auto-revealing participants when they become active
@@ -678,6 +710,7 @@ export const swadeSlice = createSlice({
 
     setEncounterState: (_state, action: PayloadAction<EncounterState>) => {
       console.debug('[SWADE] State synced from OBR room metadata');
+      logState(action.payload);
       return action.payload;
     },
 
