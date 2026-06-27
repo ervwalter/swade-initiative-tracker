@@ -20,8 +20,30 @@ export class LocalUndoStore {
   private readonly MAX_AGE = 90 * 24 * 60 * 60 * 1000; // 90 days retention
   private cleanupTimer: ReturnType<typeof setInterval> | null = null;
 
+  // Observer pattern so React can subscribe via useSyncExternalStore
+  private listeners = new Set<() => void>();
+
   constructor() {
     // Don't initialize room tracking in constructor - wait for explicit call
+  }
+
+  /**
+   * Subscribe to checkpoint changes. Returns an unsubscribe function.
+   */
+  subscribe(listener: () => void): () => void {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+
+  /**
+   * Notify subscribers that the checkpoint stack changed
+   */
+  private emit(): void {
+    for (const listener of this.listeners) {
+      listener();
+    }
   }
 
   /**
@@ -39,6 +61,7 @@ export class LocalUndoStore {
       this.currentRoomId = 'default';
       this.loadCheckpointsFromStorage();
     }
+    this.emit();
   }
 
   /**
@@ -215,8 +238,9 @@ export class LocalUndoStore {
     
     // Save to localStorage
     this.saveCheckpointsToStorage();
-    
+
     console.debug(`[Undo] Captured checkpoint: ${description} (revision ${state.revision})`);
+    this.emit();
   }
 
   /**
@@ -244,7 +268,8 @@ export class LocalUndoStore {
     
     // Save updated checkpoint stack to localStorage
     this.saveCheckpointsToStorage();
-    
+    this.emit();
+
     return undoState;
   }
 
@@ -276,6 +301,7 @@ export class LocalUndoStore {
     this.checkpoints = [];
     this.saveCheckpointsToStorage();
     console.debug('[Undo] Cleared all checkpoints');
+    this.emit();
   }
 
   /**
@@ -293,6 +319,7 @@ export class LocalUndoStore {
       clearInterval(this.cleanupTimer);
       this.cleanupTimer = null;
     }
+    this.listeners.clear();
   }
 }
 

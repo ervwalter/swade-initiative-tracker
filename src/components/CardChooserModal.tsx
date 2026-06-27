@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef } from "react";
 import {
   Box,
   Typography,
@@ -35,19 +35,16 @@ export function CardChooserModal() {
 
   const remainingCards = useAppSelector(state => state.swade.deck.remaining.length);
 
-  // Initialize selected card to current card if exists
-  useEffect(() => {
-    if (participant?.currentCardId && !selectedCardId) {
-      setSelectedCardId(participant.currentCardId);
-    }
-  }, [participant?.currentCardId, selectedCardId]);
-
   // Note: Modal has fixed dimensions unlike popovers
 
   if (!participant) {
     // Don't show error immediately - give Redux time to load
     return null;
   }
+
+  // Default to the current card until the user explicitly picks another, instead
+  // of syncing that default into state from an effect.
+  const effectiveSelectedCardId = selectedCardId || participant.currentCardId || "";
 
   const currentCard = participant.currentCardId ? cardsLookup[participant.currentCardId] : null;
   const candidateCards = participant.candidateIds.map((cardId: string) => cardsLookup[cardId]).filter(Boolean);
@@ -68,17 +65,17 @@ export function CardChooserModal() {
   };
 
   const handleConfirmSelection = async () => {
-    if (!selectedCardId) return;
+    if (!effectiveSelectedCardId) return;
 
     setIsSubmitting(true);
 
     try {
       store.dispatch(selectKeeperCard({
         participantId: participant.id,
-        cardId: selectedCardId
+        cardId: effectiveSelectedCardId
       }));
 
-      console.debug(`[CardChooser] Selected ${selectedCardId} for ${participant.name}`);
+      console.debug(`[CardChooser] Selected ${effectiveSelectedCardId} for ${participant.name}`);
 
       // Close modal
       await OBR.modal.close(getPluginId("card-chooser"));
@@ -96,7 +93,7 @@ export function CardChooserModal() {
   };
 
   const renderCard = (card: Card) => {
-    const isSelected = card.id === selectedCardId;
+    const isSelected = card.id === effectiveSelectedCardId;
     return (
       <ActionCard
         key={card.id}
@@ -175,7 +172,7 @@ export function CardChooserModal() {
           <Stack direction="row" spacing={2} sx={{ justifyContent: 'center' }}>
             <Button
               onClick={handleConfirmSelection}
-              disabled={!selectedCardId || isSubmitting || candidateCards.length === 0}
+              disabled={!effectiveSelectedCardId || isSubmitting || candidateCards.length === 0}
               variant="contained"
               size="small"
             >

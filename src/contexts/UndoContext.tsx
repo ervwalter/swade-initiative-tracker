@@ -1,7 +1,7 @@
 // Undo Context Provider
 // Provides undo functionality through React context with localStorage persistence
 
-import { useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
+import { useState, useEffect, useMemo, useCallback, useSyncExternalStore, ReactNode } from 'react';
 import OBR from '@owlbear-rodeo/sdk';
 import { store } from '../store/store';
 import { setEncounterState } from '../store/swadeSlice';
@@ -14,30 +14,23 @@ interface UndoProviderProps {
 
 export function UndoProvider({ children }: UndoProviderProps) {
   const [undoStore] = useState(() => new LocalUndoStore());
-  const [canUndoState, setCanUndoState] = useState(false);
-  const [undoDescription, setUndoDescription] = useState<string | null>(null);
 
-  // Initialize room ID when component mounts (OBR guaranteed ready by PluginGate)
+  // Subscribe React to the undo store as an external mutable source. This keeps
+  // undo availability in sync without calling setState inside an effect.
+  const subscribe = useCallback(
+    (onChange: () => void) => undoStore.subscribe(onChange),
+    [undoStore]
+  );
+  const canUndoState = useSyncExternalStore(subscribe, () => undoStore.canUndo());
+  const undoDescription = useSyncExternalStore(subscribe, () =>
+    undoStore.getUndoDescription()
+  );
+
+  // Initialize room storage on mount (OBR guaranteed ready by PluginGate) and
+  // tear down timers/subscribers on unmount. initializeWithRoom emits a change,
+  // so the subscriptions above pick up any loaded checkpoints.
   useEffect(() => {
     undoStore.initializeWithRoom(OBR.room.id);
-    
-    // Initial state update
-    setCanUndoState(undoStore.canUndo());
-    setUndoDescription(undoStore.getUndoDescription());
-  }, [undoStore]);
-
-  // Subscribe to Redux store changes to update undo availability reactively
-  useEffect(() => {
-    const unsubscribe = store.subscribe(() => {
-      setCanUndoState(undoStore.canUndo());
-      setUndoDescription(undoStore.getUndoDescription());
-    });
-    
-    return unsubscribe;
-  }, [undoStore]);
-
-  // Cleanup on unmount
-  useEffect(() => {
     return () => {
       undoStore.destroy();
     };

@@ -60,13 +60,6 @@ export const ParticipantRow = ({ participant, role, isJokerAtTop, editingId, set
     }
   }, [isActive]);
 
-  // Update edited name when participant name changes externally
-  useEffect(() => {
-    if (!isEditing) {
-      setEditedName(participant.name);
-    }
-  }, [participant.name, isEditing]);
-
   const currentCard = participant.currentCardId ? cardsLookup[participant.currentCardId] : null;
   const isJoker = participant.currentCardId === RED_JOKER_ID || participant.currentCardId === BLACK_JOKER_ID;
   const inRound = phase === 'in_round';
