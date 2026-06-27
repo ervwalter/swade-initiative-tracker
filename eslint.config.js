@@ -31,7 +31,12 @@ export default [
       '@typescript-eslint': tseslint,
     },
     rules: {
-      ...reactHooks.configs.recommended.rules,
+      // Preserve the prior (eslint-plugin-react-hooks v5) lint surface. v7's
+      // `recommended` preset adds many new React Compiler rules that would
+      // change linting policy beyond this dependency bump; opt into those
+      // separately if desired.
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },
