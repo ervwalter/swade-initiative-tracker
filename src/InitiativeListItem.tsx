@@ -86,9 +86,9 @@ export function InitiativeListItem({
         />
       }
       divider
-      selected={initiative.active}
       sx={{
         pr: "64px",
+        ...(initiative.active ? { bgcolor: "action.selected" } : {}),
       }}
       onDoubleClick={handleDoubleClick}
     >

@@ -1,6 +1,5 @@
 import React from "react";
-import { Theme as MuiTheme, createTheme } from "@mui/material/styles";
-import ThemeProvider from "@mui/material/styles/ThemeProvider";
+import { Theme as MuiTheme, createTheme, ThemeProvider } from "@mui/material/styles";
 import { CssBaseline } from "@mui/material";
 import OBR, { Theme } from "@owlbear-rodeo/sdk";
 import { useEffect, useState } from "react";

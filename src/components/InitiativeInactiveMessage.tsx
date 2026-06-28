@@ -1,5 +1,5 @@
 import { Box, Typography } from "@mui/material";
-import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
+import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutlined';
 
 export function InitiativeInactiveMessage() {
   return (
