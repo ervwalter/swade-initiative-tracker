@@ -6,7 +6,7 @@
   "license": "GPL-3.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ervwalter/swade-initiative-tracker.git"
+    "url": "https://github.com/twistymaze/swade-initiative-tracker.git"
   },
   "homepage": "https://swade-initiative.ewal.app",
   "scripts": {

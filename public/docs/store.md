@@ -9,7 +9,7 @@ tags:
   - savage-worlds
   - initiative
 manifest: https://swade-initiative.ewal.app/manifest.json
-learn-more: https://github.com/ervwalter/swade-initiative-tracker
+learn-more: https://github.com/twistymaze/swade-initiative-tracker
 ---
 
 # Savage Worlds Initiative

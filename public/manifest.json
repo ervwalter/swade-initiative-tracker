@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "manifest_version": 1,
   "author": "Erv Walter",
-  "homepage_url": "https://github.com/ervwalter/swade-initiative-tracker",
+  "homepage_url": "https://github.com/twistymaze/swade-initiative-tracker",
   "icon": "/logo.png",
   "description": "An Action Deck initiative tracker for Savage Worlds Adventure Edition (SWADE)",
   "action": {
